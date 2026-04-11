@@ -1,0 +1,3 @@
+# Sem dependências externas — todos os scripts usam apenas stdlib Python 3.x
+# urllib.request, json, os, sys, datetime já fazem parte da biblioteca padrão.
+# Nenhum pip install necessário.
