@@ -20,7 +20,8 @@ GOOGLE_CLIENT_ID      = os.environ["GOOGLE_CLIENT_ID"]
 GOOGLE_CLIENT_SECRET  = os.environ["GOOGLE_CLIENT_SECRET"]
 GOOGLE_REFRESH_TOKEN  = os.environ["GOOGLE_REFRESH_TOKEN"]
 GOOGLE_DEVELOPER_TOKEN = os.environ["GOOGLE_DEVELOPER_TOKEN"]
-GOOGLE_CUSTOMER_ID    = os.environ["GOOGLE_CUSTOMER_ID"]   # sem hifens, ex: 3180978445
+GOOGLE_CUSTOMER_ID    = os.environ["GOOGLE_CUSTOMER_ID"]   # conta direta: 3180978445
+GOOGLE_MCC_ID         = os.environ.get("GOOGLE_MCC_ID", "6359594317")  # conta MCC gerenciadora
 SPREADSHEET_ID        = os.environ["SPREADSHEET_ID"]
 # ───────────────────────────────────────────────────────────
 
@@ -86,7 +87,7 @@ def buscar_google_ads(token_ads: str, since: str, until: str) -> list:
     req.add_header("Authorization", f"Bearer {token_ads}")
     req.add_header("developer-token", GOOGLE_DEVELOPER_TOKEN)
     req.add_header("Content-Type", "application/json")
-    req.add_header("login-customer-id", GOOGLE_CUSTOMER_ID.replace("-", ""))
+    req.add_header("login-customer-id", GOOGLE_MCC_ID.replace("-", ""))
 
     try:
         with urllib.request.urlopen(req) as resp:
