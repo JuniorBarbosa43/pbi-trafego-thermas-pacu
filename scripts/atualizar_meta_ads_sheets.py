@@ -16,7 +16,8 @@ from sheets_helper import obter_access_token, limpar_e_gravar, criar_sheet_se_na
 
 # ── Credenciais via GitHub Secrets ─────────────────────────
 META_TOKEN        = os.environ["META_TOKEN"]
-META_AD_ACCOUNT   = os.environ["META_AD_ACCOUNT_ID"]   # act_XXXXXXX
+_raw_ad_account   = os.environ["META_AD_ACCOUNT_ID"]   # pode ser com ou sem prefixo act_
+META_AD_ACCOUNT   = _raw_ad_account if _raw_ad_account.startswith("act_") else f"act_{_raw_ad_account}"
 GOOGLE_CLIENT_ID  = os.environ["GOOGLE_CLIENT_ID"]
 GOOGLE_CLIENT_SECRET = os.environ["GOOGLE_CLIENT_SECRET"]
 GOOGLE_REFRESH_TOKEN = os.environ["GOOGLE_REFRESH_TOKEN"]
