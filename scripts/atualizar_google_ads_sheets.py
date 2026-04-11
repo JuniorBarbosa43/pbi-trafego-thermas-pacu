@@ -60,7 +60,7 @@ def buscar_google_ads(token_ads: str, since: str, until: str) -> list:
     Retorna lista de dicts com os campos.
     """
     customer_id = GOOGLE_CUSTOMER_ID.replace("-", "")
-    url = f"https://googleads.googleapis.com/v18/customers/{customer_id}/googleAds:searchStream"
+    url = f"https://googleads.googleapis.com/v19/customers/{customer_id}/googleAds:searchStream"
 
     query = f"""
         SELECT
