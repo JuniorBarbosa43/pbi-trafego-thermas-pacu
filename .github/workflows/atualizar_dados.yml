@@ -1,0 +1,85 @@
+name: Atualizar Dados → Google Sheets
+
+on:
+  schedule:
+    # Horários em UTC (BRT = UTC-3)
+    # 06:00 BRT = 09:00 UTC
+    - cron: '0 9 * * *'   # Meta Ads
+    - cron: '10 9 * * *'  # Meta Orgânico
+    - cron: '20 9 * * *'  # Google Ads
+  workflow_dispatch:       # Permite execução manual
+
+jobs:
+
+  # ─────────────────────────────────────────────────────────
+  meta-ads:
+    name: Meta Ads → Sheets
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 9 * * *'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Executar script
+        env:
+          META_TOKEN:            ${{ secrets.META_TOKEN }}
+          META_AD_ACCOUNT_ID:    ${{ secrets.META_AD_ACCOUNT_ID }}
+          GOOGLE_CLIENT_ID:      ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
+        run: python scripts/atualizar_meta_ads_sheets.py
+
+  # ─────────────────────────────────────────────────────────
+  meta-organico:
+    name: Meta Orgânico → Sheets
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '10 9 * * *'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Executar script
+        env:
+          META_TOKEN:            ${{ secrets.META_TOKEN }}
+          META_PAGE_ID:          ${{ secrets.META_PAGE_ID }}
+          META_IG_ID:            ${{ secrets.META_IG_ID }}
+          GOOGLE_CLIENT_ID:      ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
+        run: python scripts/atualizar_meta_organico_sheets.py
+
+  # ─────────────────────────────────────────────────────────
+  google-ads:
+    name: Google Ads → Sheets
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '20 9 * * *'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Executar script
+        env:
+          GOOGLE_CLIENT_ID:       ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET:   ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN:   ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          GOOGLE_DEVELOPER_TOKEN: ${{ secrets.GOOGLE_DEVELOPER_TOKEN }}
+          GOOGLE_CUSTOMER_ID:     ${{ secrets.GOOGLE_CUSTOMER_ID }}
+          SPREADSHEET_ID:         ${{ secrets.SPREADSHEET_ID }}
+        run: python scripts/atualizar_google_ads_sheets.py
