@@ -1,4 +1,4 @@
-"""
+→→"""
 Atualiza Google Ads campanhas no Google Sheets via Google Ads API.
 Roda via GitHub Actions todo dia as 06:20.
 Janela de 14 dias (cobre delay de consolidacao da API).
