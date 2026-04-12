@@ -24,14 +24,12 @@ import urllib.error
 sys.path.insert(0, os.path.dirname(__file__))
 from sheets_helper import obter_access_token, limpar_e_gravar, criar_sheet_se_nao_existe
 
-# Config
 FIREBASE_REFRESH_TOKEN = os.environ["GHL_FIREBASE_REFRESH_TOKEN"]
 FIREBASE_API_KEY       = os.environ["GHL_FIREBASE_API_KEY"]
 LOCATION_ID  = os.environ["GHL_LOCATION"]
 WABA_ID      = os.environ["GHL_WABA_ID"]
 
-def obter_ghl_token() -> str:
-    """Usa o Firebase refresh token para obter um novo GHL session JWT."""
+def obter_ghl_token():
     fb_data = urllib.parse.urlencode({
         "grant_type":    "refresh_token",
         "refresh_token": FIREBASE_REFRESH_TOKEN,
@@ -55,17 +53,33 @@ def obter_ghl_token() -> str:
     )
     ghl_req.add_header("Content-Type", "application/json")
     ghl_req.add_header("Version", "2021-07-28")
-    with urllib.request.urlopen(ghl_req, timeout=30) as resp:
-        ghl_resp = json.loads(resp.read())
+    ghl_req.add_header("token-id", id_token)
+    ghl_req.add_header("source", "WEB_USER")
+    ghl_req.add_header("channel", "APP")
+    ghl_req.add_header("Origin", "https://go.movatalks.com")
+    ghl_req.add_header("Referer", "https://go.movatalks.com/")
+    ghl_req.add_header("app-name", "spm-ts")
+    ghl_req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36")
+
+    try:
+        with urllib.request.urlopen(ghl_req, timeout=30) as resp:
+            ghl_resp = json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        print(f"  AVISO: /user/login HTTP {e.code}: {body[:300]}")
+        print(f"  Fallback: usando Firebase ID token como Bearer...")
+        return id_token, id_token
 
     token = ghl_resp.get("token") or ghl_resp.get("access_token") or ghl_resp.get("jwt")
     if not token:
-        raise RuntimeError(f"GHL login nao retornou token. Resposta: {str(ghl_resp)[:200]}")
+        print(f"  AVISO: login sem token. Resposta: {str(ghl_resp)[:200]}")
+        return id_token, id_token
     print(f"  GHL JWT obtido com sucesso")
-    return token
+    return token, id_token
+
 
 print("Obtendo GHL token via Firebase...")
-GHL_TOKEN = obter_ghl_token()
+GHL_TOKEN, FIREBASE_ID_TOKEN = obter_ghl_token()
 
 GOOGLE_CLIENT_ID     = os.environ["GOOGLE_CLIENT_ID"]
 GOOGLE_CLIENT_SECRET = os.environ["GOOGLE_CLIENT_SECRET"]
@@ -76,8 +90,8 @@ BASE_URL = "https://backend.leadconnectorhq.com"
 
 END_DATE   = datetime.date.today()
 START_DATE = END_DATE - datetime.timedelta(days=30)
-START_STR  = START_DATE.isoformat()
-END_STR    = END_DATE.isoformat()
+START_TS   = int(datetime.datetime.combine(START_DATE, datetime.time.min).timestamp())
+END_TS     = int(datetime.datetime.combine(END_DATE, datetime.time.max).timestamp())
 
 def infer_departamento(name: str) -> str:
     n = (name or "").lower()
@@ -100,8 +114,16 @@ def infer_departamento(name: str) -> str:
 def ghl_get(url: str) -> dict:
     req = urllib.request.Request(url)
     req.add_header("Authorization", f"Bearer {GHL_TOKEN}")
+    req.add_header("token-id", FIREBASE_ID_TOKEN)
+    req.add_header("source", "WEB_USER")
+    req.add_header("channel", "APP")
     req.add_header("Version", "2021-07-28")
-    req.add_header("Accept", "application/json")
+    req.add_header("Accept", "application/json, text/plain, */*")
+    req.add_header("Origin", "https://go.movatalks.com")
+    req.add_header("Referer", "https://go.movatalks.com/")
+    req.add_header("app-name", "spm-ts")
+    req.add_header("route-name", "whatsapp-v1")
+    req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36")
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             return json.loads(resp.read())
@@ -118,7 +140,7 @@ def fetch_templates() -> list:
 
 def fetch_analytics(template_id: str) -> dict:
     params = (
-        f"startDate={START_STR}&endDate={END_STR}"
+        f"startDate={START_TS}&endDate={END_TS}"
         f"&wabaId={WABA_ID}&templateIds[]={template_id}"
     )
     url = f"{BASE_URL}/phone-system/whatsapp/location/{LOCATION_ID}/analytics?{params}"
@@ -137,7 +159,8 @@ def ts_to_iso(ts) -> str:
         return str(ts)
 
 def main():
-    print(f"Periodo analytics: {START_STR} -> {END_STR}")
+    print(f"Periodo analytics: {START_DATE.isoformat()} -> {END_DATE.isoformat()}")
+    print(f"  Timestamps: {START_TS} -> {END_TS}")
 
     print("Buscando templates da GHL...")
     templates_raw = fetch_templates()
@@ -222,20 +245,14 @@ def main():
         "sentTotal", "deliveredTotal", "readTotal",
         "startTime", "endTime", "error",
     ]
-    wa_rows = [
-        [r.get(c, "") for c in wa_headers]
-        for r in analytics_flat
-    ]
+    wa_rows = [[r.get(c, "") for c in wa_headers] for r in analytics_flat]
     limpar_e_gravar(SPREADSHEET_ID, "WA_Analytics", wa_headers, wa_rows, token)
 
     tpl_headers = [
         "templateId", "templateName", "category", "language", "status",
         "folderId", "locationId", "createdAt", "updatedAt", "departamentoInferido",
     ]
-    tpl_rows = [
-        [r.get(c, "") for c in tpl_headers]
-        for r in templates_flat
-    ]
+    tpl_rows = [[r.get(c, "") for c in tpl_headers] for r in templates_flat]
     limpar_e_gravar(SPREADSHEET_ID, "WA_Templates", tpl_headers, tpl_rows, token)
 
     print("\nConcluido com sucesso.")
