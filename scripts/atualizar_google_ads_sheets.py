@@ -19,7 +19,7 @@ from sheets_helper import obter_access_token, limpar_e_gravar, criar_sheet_se_na
 GOOGLE_CLIENT_ID      = os.environ["GOOGLE_CLIENT_ID"]
 GOOGLE_CLIENT_SECRET  = os.environ["GOOGLE_CLIENT_SECRET"]
 GOOGLE_REFRESH_TOKEN  = os.environ["GOOGLE_REFRESH_TOKEN"]
-GOOGLE_DEVELOPER_TOKEN = os.environ["GOOGLE_DEVELOPER_TOKEN"]
+GOOGLE_DEVELOPER_TOKEN = os.environ.get("GOOGLE_DEVELOPER_TOKEN", "xr00fFrU4qlg4WlDlkIVfA")
 GOOGLE_CUSTOMER_ID    = os.environ["GOOGLE_CUSTOMER_ID"]
 GOOGLE_MCC_ID         = os.environ.get("GOOGLE_MCC_ID", "6359594317")
 SPREADSHEET_ID        = os.environ["SPREADSHEET_ID"]
