@@ -16,7 +16,7 @@ from sheets_helper import obter_access_token, limpar_e_gravar, criar_sheet_se_na
 
 META_TOKEN           = os.environ["META_TOKEN"]
 META_PAGE_ID         = os.environ["META_PAGE_ID"]
-META_IG_ID           = os.environ["META_IG_ID"]
+META_IG_ID           = os.environ.get("META_IG_ID", "17841407112299710")
 GOOGLE_CLIENT_ID     = os.environ["GOOGLE_CLIENT_ID"]
 GOOGLE_CLIENT_SECRET = os.environ["GOOGLE_CLIENT_SECRET"]
 GOOGLE_REFRESH_TOKEN = os.environ["GOOGLE_REFRESH_TOKEN"]
