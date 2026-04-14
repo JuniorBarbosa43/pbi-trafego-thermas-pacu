@@ -118,14 +118,15 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
 
 
 def atualizar_ig(token_g: str, historico: bool = False):
-    metricas_day = ["reach", "impressions", "follower_count", "website_clicks"]
-    metricas_total = ["accounts_engaged", "profile_views"]
+    # Metricas validas na API v25+ (impressions e follower_count foram removidas)
+    metricas_day = ["reach", "website_clicks", "profile_views"]
+    metricas_total = ["accounts_engaged"]
 
     if historico:
-        print("IG: Modo HISTORICO desde 2025-01-01 em chunks de 90 dias")
+        print("IG: Modo HISTORICO desde 2025-01-01 em chunks de 28 dias (limite da API)")
         inicio = date(2025, 1, 1)
         fim = date.today()
-        chunk_dias = 90
+        chunk_dias = 28  # API IG limita a 30 dias por request
         todos_rows = []
 
         current = inicio
@@ -167,7 +168,9 @@ def atualizar_ig(token_g: str, historico: bool = False):
         rows = todos_rows
     else:
         rows = []
-        since = (date.today() - timedelta(days=JANELA_DIAS)).isoformat()
+        # API IG limita a 30 dias por request — usar 28 para margem
+        janela_ig = min(JANELA_DIAS, 28)
+        since = (date.today() - timedelta(days=janela_ig)).isoformat()
         until = date.today().isoformat()
 
         data = graph_get(f"{META_IG_ID}/insights", {
