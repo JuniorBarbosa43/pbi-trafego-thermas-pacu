@@ -60,7 +60,7 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
         "page_views_total",
         "page_actions_post_reactions_total",
     ]
-    # Metricas extras -- buscadas separadamente para nao derrubar as core se falharem
+    # Metricas extras -- buscadas em chunks de 90 dias (limite da API)
     metricas_extras = [
         "page_impressions_unique",
         "page_daily_follows_unique",
@@ -105,7 +105,6 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
     else:
         since = (date.today() - timedelta(days=JANELA_DIAS)).isoformat()
         until = date.today().isoformat()
-
         data = graph_get(f"{META_PAGE_ID}/insights", {
             "metric":       ",".join(metricas),
             "period":       "day",
@@ -113,7 +112,6 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
             "until":        until,
             "access_token": page_token,
         })
-
         rows = []
         for item in data.get("data", []):
             metrica = item.get("name", "")
@@ -123,29 +121,39 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
                     v = sum(v.values())
                 rows.append([val.get("end_time", "")[:10], metrica, v])
 
-    # Buscar metricas extras individualmente (resiliente a deprecacoes)
-    since_extra = (date.today() - timedelta(days=JANELA_DIAS if not historico else 365)).isoformat()
-    until_extra = date.today().isoformat()
+    # Metricas extras em chunks de 90 dias (limite da API Facebook)
+    if historico:
+        extra_inicio = date(2025, 1, 1)
+    else:
+        extra_inicio = date.today() - timedelta(days=JANELA_DIAS)
+    extra_fim = date.today()
+    CHUNK_EXTRA = 90
+
     for extra_metric in metricas_extras:
         print(f"  FB extra: {extra_metric}...")
-        extra_data = graph_get(f"{META_PAGE_ID}/insights", {
-            "metric":       extra_metric,
-            "period":       "day",
-            "since":        since_extra,
-            "until":        until_extra,
-            "access_token": page_token,
-        })
-        if extra_data.get("data"):
-            for item in extra_data["data"]:
-                metrica = item.get("name", "")
-                for val in item.get("values", []):
-                    v = val.get("value", 0)
-                    if isinstance(v, dict):
-                        v = sum(v.values())
-                    rows.append([val.get("end_time", "")[:10], metrica, v])
-            print(f"    OK: {len(extra_data['data'])} series")
-        else:
-            print(f"    SEM DADOS (metrica possivelmente deprecada)")
+        extra_current = extra_inicio
+        while extra_current <= extra_fim:
+            extra_chunk_end = min(extra_current + timedelta(days=CHUNK_EXTRA), extra_fim)
+            extra_data = graph_get(f"{META_PAGE_ID}/insights", {
+                "metric":       extra_metric,
+                "period":       "day",
+                "since":        extra_current.isoformat(),
+                "until":        extra_chunk_end.isoformat(),
+                "access_token": page_token,
+            })
+            if extra_data.get("data"):
+                for item in extra_data["data"]:
+                    metrica = item.get("name", "")
+                    for val in item.get("values", []):
+                        v = val.get("value", 0)
+                        if isinstance(v, dict):
+                            v = sum(v.values())
+                        rows.append([val.get("end_time", "")[:10], metrica, v])
+                print(f"    chunk {extra_current} -> {extra_chunk_end}: {len(extra_data['data'])} series")
+            else:
+                print(f"    chunk {extra_current} -> {extra_chunk_end}: SEM DADOS")
+            extra_current = extra_chunk_end + timedelta(days=1)
+            time.sleep(0.2)
 
     headers = ["data", "metrica", "valor"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "Meta_Organico_FB", token_g)
@@ -153,23 +161,12 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
 
 
 def atualizar_ig(token_g: str, page_token: str, historico: bool = False):
-    """
-    Atualiza metricas organicas do Instagram Business.
-    Usa page_token (nao user token) para garantir permissao instagram_manage_insights.
-    Tambem busca follower_count via endpoint /fields do IG user.
-    """
-    # API v25+: reach suporta period=day; website_clicks e profile_views requerem metric_type=total_value
     metricas_day = ["reach"]
-    # Metricas que requerem metric_type=total_value (API v25+)
     metricas_total_value = ["website_clicks", "profile_views", "accounts_engaged"]
-
-    # Tenta page_token primeiro, fallback para META_TOKEN
     ig_token = page_token or META_TOKEN
 
     def _buscar_chunk_ig(since, until):
         chunk_rows = []
-
-        # Metricas com period=day (ex: reach)
         if metricas_day:
             data = graph_get(f"{META_IG_ID}/insights", {
                 "metric":       ",".join(metricas_day),
@@ -184,8 +181,6 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False):
                 metrica = item.get("name", "")
                 for val in item.get("values", []):
                     chunk_rows.append([val.get("end_time", "")[:10], metrica, val.get("value", 0)])
-
-        # Metricas com metric_type=total_value -- buscar individualmente para resiliencia
         for tv_metric in metricas_total_value:
             tv_data = graph_get(f"{META_IG_ID}/insights", {
                 "metric":       tv_metric,
@@ -201,27 +196,23 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False):
                     total_value = item.get("total_value", {})
                     valor = total_value.get("value", 0) if isinstance(total_value, dict) else 0
                     chunk_rows.append([until, metrica, valor])
-
         return chunk_rows
 
     if historico:
-        print("IG: Modo HISTORICO desde 2025-01-01 em chunks de 28 dias (limite da API)")
+        print("IG: Modo HISTORICO desde 2025-01-01 em chunks de 28 dias")
         inicio = date(2025, 1, 1)
         fim = date.today()
         chunk_dias = 28
         todos_rows = []
-
         current = inicio
         while current < fim:
             chunk_end = min(current + timedelta(days=chunk_dias), fim)
             since = current.isoformat()
             until = chunk_end.isoformat()
             print(f"  Periodo: {since} -> {until}")
-
             todos_rows.extend(_buscar_chunk_ig(since, until))
             current = chunk_end + timedelta(days=1)
             time.sleep(0.2)
-
         rows = todos_rows
     else:
         janela_ig = min(JANELA_DIAS, 28)
@@ -229,7 +220,6 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False):
         until = date.today().isoformat()
         rows = _buscar_chunk_ig(since, until)
 
-    # Buscar follower_count via endpoint de fields (disponivel fora de /insights)
     print("  Buscando follower_count via IG user fields...")
     ig_user = graph_get(META_IG_ID, {
         "fields":       "followers_count",
@@ -240,8 +230,7 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False):
         rows.append([date.today().isoformat(), "follower_count", fc])
         print(f"  follower_count = {fc}")
     else:
-        print("  AVISO: follower_count nao retornado (permissoes do token)")
-
+        print("  AVISO: follower_count nao retornado")
     print(f"  IG total linhas coletadas: {len(rows)}")
     headers = ["data", "metrica", "valor"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "Meta_Organico_IG", token_g)
