@@ -1,0 +1,27 @@
+name: Teste Meta Ads Historico
+
+on:
+  workflow_dispatch:
+
+jobs:
+  meta-ads-historico:
+    name: Meta Ads Historico (Teste)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Carga historica Meta Ads
+        env:
+          META_TOKEN:            ${{ secrets.META_TOKEN }}
+          META_AD_ACCOUNT_ID:    ${{ secrets.META_AD_ACCOUNT_ID }}
+          GOOGLE_CLIENT_ID:      ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
+        run: python scripts/atualizar_meta_ads_sheets.py --historico
