@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  meta-ads-historico:
-    name: Meta Ads Historico (Teste)
+  upload-json:
+    name: Upload JSON local -> Sheets
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -16,13 +16,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Carga historica Meta Ads
+      - name: Upload meta_ads_campanhas.json para Sheets
         env:
-          META_TOKEN:            ${{ secrets.META_TOKEN }}
-          META_AD_ACCOUNT_ID:    ${{ secrets.META_AD_ACCOUNT_ID }}
           GOOGLE_CLIENT_ID:      ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
-        # Modo incremental com JANELA_DIAS=500 - busca desde 01/01/2025 sem paginacao complexa
-        run: python scripts/atualizar_meta_ads_sheets.py
+        run: python scripts/upload_meta_ads_json.py --json-file data/meta_ads_campanhas.json
