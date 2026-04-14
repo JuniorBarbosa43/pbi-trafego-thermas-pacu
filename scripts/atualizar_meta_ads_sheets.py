@@ -37,7 +37,7 @@ HEADERS = ["campaign_id", "campaign_name", "date_start", "date_stop",
 
 
 def buscar_paginas(since: str, until: str) -> list:
-    """Busca todos os dados paginados da API."""
+    """Busca todos os dados paginados da API usando o link 'next' da paginacao."""
     base_query = {
         "fields":         FIELDS,
         "level":          "campaign",
@@ -48,27 +48,26 @@ def buscar_paginas(since: str, until: str) -> list:
     }
     url_base = f"https://graph.facebook.com/v25.0/{META_AD_ACCOUNT}/insights"
     registros = []
-    after = None
+    url = url_base + "?" + urllib.parse.urlencode(base_query)
 
-    while True:
-        query = dict(base_query)
-        if after:
-            query["after"] = after
-
-        url = url_base + "?" + urllib.parse.urlencode(query)
+    while url:
         try:
             with urllib.request.urlopen(url) as resp:
                 data = json.loads(resp.read())
 
-            registros.extend(data.get("data", []))
-            cursors = data.get("paging", {}).get("cursors", {})
-            after = cursors.get("after")
-            if not after or not data.get("data"):
-                break
-            time.sleep(0.2)
+            page_data = data.get("data", [])
+            registros.extend(page_data)
+
+            # Usar o link 'next' para paginacao (mais confiavel que cursors)
+            next_url = data.get("paging", {}).get("next")
+            if next_url and page_data:
+                url = next_url
+                time.sleep(0.2)
+            else:
+                url = None
         except Exception as e:
-            print(f"  Aviso ao buscar pagina (after={after}): {e}")
-            break
+            print(f"  Aviso ao buscar pagina: {e}")
+            url = None
 
     return registros
 
