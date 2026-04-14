@@ -112,7 +112,7 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
                     v = sum(v.values())
                 rows.append([val.get("end_time", "")[:10], metrica, v])
 
-    headers = ["data", "metrica", "value"]
+    headers = ["data", "metrica", "valor"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "Meta_Organico_FB", token_g)
     upsert_por_data(SPREADSHEET_ID, "Meta_Organico_FB", headers, rows, token_g, key_cols=["data", "metrica"])
 
@@ -199,7 +199,7 @@ def atualizar_ig(token_g: str, historico: bool = False):
             valor = total_value.get("value", 0) if isinstance(total_value, dict) else 0
             rows.append([until, metrica, valor])
 
-    headers = ["data", "metrica", "value"]
+    headers = ["data", "metrica", "valor"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "Meta_Organico_IG", token_g)
     upsert_por_data(SPREADSHEET_ID, "Meta_Organico_IG", headers, rows, token_g, key_cols=["data", "metrica"])
 
@@ -225,7 +225,8 @@ def atualizar_posts(token_g: str, historico: bool = False):
             post.get("impressions", 0),
         ])
 
-    headers = ["id", "data", "media_type", "likes", "comments", "reach", "impressions"]
+    # Colunas alinhadas com o modelo Power BI (IG_Posts.tmdl)
+    headers = ["id", "data", "tipo", "likes", "comentarios", "reach", "impressions"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "IG_Posts", token_g)
     # Upsert por ID (unico por post)
     upsert_por_data(SPREADSHEET_ID, "IG_Posts", headers, rows, token_g, key_cols=["id"])

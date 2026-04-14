@@ -66,6 +66,7 @@ jobs:
         env:
           META_TOKEN:            ${{ secrets.META_TOKEN }}
           META_PAGE_ID:          ${{ secrets.META_PAGE_ID }}
+          META_IG_ID:            ${{ secrets.META_IG_ID }}
           GOOGLE_CLIENT_ID:      ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
