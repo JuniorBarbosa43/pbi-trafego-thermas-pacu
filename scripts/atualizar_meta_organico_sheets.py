@@ -53,15 +53,20 @@ def graph_get(path: str, params: dict) -> dict:
 
 
 def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
-    metricas = [
+    # Metricas principais (comprovadas na API v25)
+    metricas_core = [
         "page_video_views",
         "page_post_engagements",
         "page_views_total",
         "page_actions_post_reactions_total",
-        "page_follows",
-        "page_unfollows",
-        "page_impressions_unique",
     ]
+    # Metricas extras -- buscadas separadamente para nao derrubar as core se falharem
+    metricas_extras = [
+        "page_impressions_unique",
+        "page_daily_follows_unique",
+        "page_daily_unfollows_unique",
+    ]
+    metricas = metricas_core
 
     if historico:
         print("FB: Modo HISTORICO desde 2025-01-01 em chunks de 90 dias")
@@ -98,11 +103,14 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
 
         rows = todos_rows
     else:
+        since = (date.today() - timedelta(days=JANELA_DIAS)).isoformat()
+        until = date.today().isoformat()
+
         data = graph_get(f"{META_PAGE_ID}/insights", {
             "metric":       ",".join(metricas),
             "period":       "day",
-            "since":        (date.today() - timedelta(days=JANELA_DIAS)).isoformat(),
-            "until":        date.today().isoformat(),
+            "since":        since,
+            "until":        until,
             "access_token": page_token,
         })
 
@@ -115,6 +123,30 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
                     v = sum(v.values())
                 rows.append([val.get("end_time", "")[:10], metrica, v])
 
+    # Buscar metricas extras individualmente (resiliente a deprecacoes)
+    since_extra = (date.today() - timedelta(days=JANELA_DIAS if not historico else 365)).isoformat()
+    until_extra = date.today().isoformat()
+    for extra_metric in metricas_extras:
+        print(f"  FB extra: {extra_metric}...")
+        extra_data = graph_get(f"{META_PAGE_ID}/insights", {
+            "metric":       extra_metric,
+            "period":       "day",
+            "since":        since_extra,
+            "until":        until_extra,
+            "access_token": page_token,
+        })
+        if extra_data.get("data"):
+            for item in extra_data["data"]:
+                metrica = item.get("name", "")
+                for val in item.get("values", []):
+                    v = val.get("value", 0)
+                    if isinstance(v, dict):
+                        v = sum(v.values())
+                    rows.append([val.get("end_time", "")[:10], metrica, v])
+            print(f"    OK: {len(extra_data['data'])} series")
+        else:
+            print(f"    SEM DADOS (metrica possivelmente deprecada)")
+
     headers = ["data", "metrica", "valor"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "Meta_Organico_FB", token_g)
     upsert_por_data(SPREADSHEET_ID, "Meta_Organico_FB", headers, rows, token_g, key_cols=["data", "metrica"])
@@ -126,42 +158,50 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False):
     Usa page_token (nao user token) para garantir permissao instagram_manage_insights.
     Tambem busca follower_count via endpoint /fields do IG user.
     """
-    metricas_day = ["reach", "website_clicks", "profile_views"]
-    metricas_total = ["accounts_engaged"]
+    # API v25+: reach suporta period=day; website_clicks e profile_views requerem metric_type=total_value
+    metricas_day = ["reach"]
+    # Metricas que requerem metric_type=total_value (API v25+)
+    metricas_total_value = ["website_clicks", "profile_views", "accounts_engaged"]
 
     # Tenta page_token primeiro, fallback para META_TOKEN
     ig_token = page_token or META_TOKEN
 
     def _buscar_chunk_ig(since, until):
         chunk_rows = []
-        data = graph_get(f"{META_IG_ID}/insights", {
-            "metric":       ",".join(metricas_day),
-            "period":       "day",
-            "since":        since,
-            "until":        until,
-            "access_token": ig_token,
-        })
-        if not data.get("data"):
-            print(f"  AVISO IG insights (day): sem dados para {since}->{until}")
-        for item in data.get("data", []):
-            metrica = item.get("name", "")
-            for val in item.get("values", []):
-                chunk_rows.append([val.get("end_time", "")[:10], metrica, val.get("value", 0)])
-        data_total = graph_get(f"{META_IG_ID}/insights", {
-            "metric":       ",".join(metricas_total),
-            "period":       "total_over_range",
-            "since":        since,
-            "until":        until,
-            "metric_type":  "total_value",
-            "access_token": ig_token,
-        })
-        if not data_total.get("data"):
-            print(f"  AVISO IG insights (total): sem dados para {since}->{until}")
-        for item in data_total.get("data", []):
-            metrica = item.get("name", "")
-            total_value = item.get("total_value", {})
-            valor = total_value.get("value", 0) if isinstance(total_value, dict) else 0
-            chunk_rows.append([until, metrica, valor])
+
+        # Metricas com period=day (ex: reach)
+        if metricas_day:
+            data = graph_get(f"{META_IG_ID}/insights", {
+                "metric":       ",".join(metricas_day),
+                "period":       "day",
+                "since":        since,
+                "until":        until,
+                "access_token": ig_token,
+            })
+            if not data.get("data"):
+                print(f"  AVISO IG insights (day): sem dados para {since}->{until}")
+            for item in data.get("data", []):
+                metrica = item.get("name", "")
+                for val in item.get("values", []):
+                    chunk_rows.append([val.get("end_time", "")[:10], metrica, val.get("value", 0)])
+
+        # Metricas com metric_type=total_value -- buscar individualmente para resiliencia
+        for tv_metric in metricas_total_value:
+            tv_data = graph_get(f"{META_IG_ID}/insights", {
+                "metric":       tv_metric,
+                "period":       "day",
+                "metric_type":  "total_value",
+                "since":        since,
+                "until":        until,
+                "access_token": ig_token,
+            })
+            if tv_data.get("data"):
+                for item in tv_data["data"]:
+                    metrica = item.get("name", "")
+                    total_value = item.get("total_value", {})
+                    valor = total_value.get("value", 0) if isinstance(total_value, dict) else 0
+                    chunk_rows.append([until, metrica, valor])
+
         return chunk_rows
 
     if historico:
@@ -170,15 +210,18 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False):
         fim = date.today()
         chunk_dias = 28
         todos_rows = []
+
         current = inicio
         while current < fim:
             chunk_end = min(current + timedelta(days=chunk_dias), fim)
             since = current.isoformat()
             until = chunk_end.isoformat()
             print(f"  Periodo: {since} -> {until}")
+
             todos_rows.extend(_buscar_chunk_ig(since, until))
             current = chunk_end + timedelta(days=1)
             time.sleep(0.2)
+
         rows = todos_rows
     else:
         janela_ig = min(JANELA_DIAS, 28)
@@ -186,6 +229,7 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False):
         until = date.today().isoformat()
         rows = _buscar_chunk_ig(since, until)
 
+    # Buscar follower_count via endpoint de fields (disponivel fora de /insights)
     print("  Buscando follower_count via IG user fields...")
     ig_user = graph_get(META_IG_ID, {
         "fields":       "followers_count",
@@ -196,7 +240,7 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False):
         rows.append([date.today().isoformat(), "follower_count", fc])
         print(f"  follower_count = {fc}")
     else:
-        print("  AVISO: follower_count nao retornado")
+        print("  AVISO: follower_count nao retornado (permissoes do token)")
 
     print(f"  IG total linhas coletadas: {len(rows)}")
     headers = ["data", "metrica", "valor"]
