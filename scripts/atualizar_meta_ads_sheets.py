@@ -28,8 +28,8 @@ SPREADSHEET_ID    = os.environ["SPREADSHEET_ID"]
 # ───────────────────────────────────────────────────────────
 
 SHEET_NAME   = "Meta_Ads_Campanhas"
-JANELA_DIAS  = 14
-FALLBACK_DIAS = 365
+JANELA_DIAS  = 500  # historico desde 01/01/2025 (modo incremental)
+FALLBACK_DIAS = 500
 
 FIELDS = "campaign_id,campaign_name,date_start,date_stop,impressions,reach,clicks,spend,ctr"
 HEADERS = ["campaign_id", "campaign_name", "date_start", "date_stop",

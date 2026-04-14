@@ -24,4 +24,5 @@ jobs:
           GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
-        run: python scripts/atualizar_meta_ads_sheets.py --historico
+        # Modo incremental com JANELA_DIAS=500 - busca desde 01/01/2025 sem paginacao complexa
+        run: python scripts/atualizar_meta_ads_sheets.py
