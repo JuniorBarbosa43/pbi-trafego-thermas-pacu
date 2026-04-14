@@ -1,6 +1,7 @@
 """
 Extrai analytics de templates WhatsApp da API GoHighLevel (LeadConnector)
 e grava nas abas WA_Analytics e WA_Templates do Google Sheets.
+Modo UPSERT com opcao --historico para carga desde 2025-01-01.
 
 Variaveis de ambiente necessarias:
   GHL_FIREBASE_REFRESH_TOKEN -- Firebase refresh token (longa duracao)
@@ -17,12 +18,14 @@ import os
 import sys
 import json
 import datetime
+import argparse
 import urllib.request
 import urllib.parse
 import urllib.error
+import time
 
 sys.path.insert(0, os.path.dirname(__file__))
-from sheets_helper import obter_access_token, limpar_e_gravar, criar_sheet_se_nao_existe
+from sheets_helper import obter_access_token, upsert_por_data, limpar_e_gravar, criar_sheet_se_nao_existe
 
 FIREBASE_REFRESH_TOKEN = os.environ["GHL_FIREBASE_REFRESH_TOKEN"]
 FIREBASE_API_KEY       = os.environ["GHL_FIREBASE_API_KEY"]
@@ -88,11 +91,6 @@ SPREADSHEET_ID       = os.environ["SPREADSHEET_ID"]
 
 BASE_URL = "https://backend.leadconnectorhq.com"
 
-END_DATE   = datetime.date.today()
-START_DATE = END_DATE - datetime.timedelta(days=30)
-START_TS   = int(datetime.datetime.combine(START_DATE, datetime.time.min).timestamp())
-END_TS     = int(datetime.datetime.combine(END_DATE, datetime.time.max).timestamp())
-
 def infer_departamento(name: str) -> str:
     n = (name or "").lower()
     if "cobranca" in n or "cobran" in n or "parcela" in n or "renegoc" in n or "reativacao" in n or "carteirinha" in n:
@@ -138,9 +136,9 @@ def fetch_templates() -> list:
         return data
     return data.get("templates", data.get("data", []))
 
-def fetch_analytics(template_id: str) -> dict:
+def fetch_analytics(template_id: str, start_ts: int, end_ts: int) -> dict:
     params = (
-        f"startDate={START_TS}&endDate={END_TS}"
+        f"startDate={start_ts}&endDate={end_ts}"
         f"&wabaId={WABA_ID}&templateIds[]={template_id}"
     )
     url = f"{BASE_URL}/phone-system/whatsapp/location/{LOCATION_ID}/analytics?{params}"
@@ -158,9 +156,23 @@ def ts_to_iso(ts) -> str:
     except Exception:
         return str(ts)
 
+def weeks_between(start: datetime.date, end: datetime.date):
+    cur = start
+    while cur <= end:
+        week_end = min(cur + datetime.timedelta(days=6), end)
+        yield cur, week_end
+        cur = week_end + datetime.timedelta(days=1)
+
 def main():
-    print(f"Periodo analytics: {START_DATE.isoformat()} -> {END_DATE.isoformat()}")
-    print(f"  Timestamps: {START_TS} -> {END_TS}")
+    parser = argparse.ArgumentParser(description="Atualiza WhatsApp Analytics no Google Sheets")
+    parser.add_argument("--historico", action="store_true", help="Fetch dados historicos desde 2025-01-01 em chunks de 7 dias")
+    args = parser.parse_args()
+
+    print(f"Autenticando Google...")
+    token = obter_access_token(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN)
+
+    for sheet_name in ("WA_Analytics", "WA_Templates"):
+        criar_sheet_se_nao_existe(SPREADSHEET_ID, sheet_name, token)
 
     print("Buscando templates da GHL...")
     templates_raw = fetch_templates()
@@ -184,59 +196,120 @@ def main():
     print("Buscando analytics por template...")
     analytics_flat = []
 
-    for tpl in templates_flat:
-        tid  = tpl["templateId"]
-        name = tpl["templateName"]
-        print(f"  [{name}] id={tid}")
+    if args.historico:
+        print("Modo HISTORICO: fetchando dados desde 2025-01-01 em chunks de 7 dias")
+        inicio = datetime.date(2025, 1, 1)
+        fim = datetime.date.today()
+        weeks = list(weeks_between(inicio, fim))
+        print(f"  Total de semanas: {len(weeks)}")
 
-        analytics = fetch_analytics(tid)
-        delivery  = []
-        if analytics:
-            delivery = (analytics.get("deliverygraphData") or {}).get(tid, [])
+        for tpl in templates_flat:
+            tid  = tpl["templateId"]
+            name = tpl["templateName"]
+            print(f"  Template [{name}] id={tid}")
 
-        base_row = {
-            "templateId":           tid,
-            "templateName":         name,
-            "category":             tpl["category"],
-            "language":             tpl["language"],
-            "status":               tpl["status"],
-            "folderId":             tpl["folderId"],
-            "folderName":           "",
-            "departamentoInferido": tpl["departamentoInferido"],
-            "sentTotal":            str(analytics.get("sent") or ""),
-            "deliveredTotal":       str(analytics.get("delivered") or ""),
-            "readTotal":            str(analytics.get("read") or ""),
-        }
+            for ws, we in weeks:
+                start_ts = int(datetime.datetime.combine(ws, datetime.time.min).timestamp())
+                end_ts   = int(datetime.datetime.combine(we, datetime.time.max).timestamp())
 
-        if not delivery:
-            analytics_flat.append({
-                **base_row,
-                "sent":      str(analytics.get("sent") or ""),
-                "delivered": str(analytics.get("delivered") or ""),
-                "read":      str(analytics.get("read") or ""),
-                "startTime": "",
-                "endTime":   "",
-                "error":     "" if analytics else "no_data",
-            })
-        else:
-            for point in delivery:
+                analytics = fetch_analytics(tid, start_ts, end_ts)
+                delivery  = []
+                if analytics:
+                    delivery = (analytics.get("deliverygraphData") or {}).get(tid, [])
+
+                base_row = {
+                    "templateId":           tid,
+                    "templateName":         name,
+                    "category":             tpl["category"],
+                    "language":             tpl["language"],
+                    "status":               tpl["status"],
+                    "folderId":             tpl["folderId"],
+                    "folderName":           "",
+                    "departamentoInferido": tpl["departamentoInferido"],
+                    "sentTotal":            str(analytics.get("sent") or ""),
+                    "deliveredTotal":       str(analytics.get("delivered") or ""),
+                    "readTotal":            str(analytics.get("read") or ""),
+                }
+
+                if not delivery:
+                    analytics_flat.append({
+                        **base_row,
+                        "sent":      str(analytics.get("sent") or ""),
+                        "delivered": str(analytics.get("delivered") or ""),
+                        "read":      str(analytics.get("read") or ""),
+                        "startTime": "",
+                        "endTime":   "",
+                        "error":     "" if analytics else "no_data",
+                    })
+                else:
+                    for point in delivery:
+                        analytics_flat.append({
+                            **base_row,
+                            "sent":      str(point.get("sent") or ""),
+                            "delivered": str(point.get("delivered") or ""),
+                            "read":      str(point.get("read") or ""),
+                            "startTime": ts_to_iso(point.get("startTime")),
+                            "endTime":   ts_to_iso(point.get("endTime")),
+                            "error":     "",
+                        })
+                time.sleep(0.2)
+
+    else:
+        # Modo incremental: ultimos 7 dias (mesmo padrao do carga_historica)
+        END_DATE   = datetime.date.today()
+        START_DATE = END_DATE - datetime.timedelta(days=7)
+        print(f"Modo INCREMENTAL: Periodo: {START_DATE} → {END_DATE}")
+
+        START_TS   = int(datetime.datetime.combine(START_DATE, datetime.time.min).timestamp())
+        END_TS     = int(datetime.datetime.combine(END_DATE, datetime.time.max).timestamp())
+
+        for tpl in templates_flat:
+            tid  = tpl["templateId"]
+            name = tpl["templateName"]
+            print(f"  [{name}] id={tid}")
+
+            analytics = fetch_analytics(tid, START_TS, END_TS)
+            delivery  = []
+            if analytics:
+                delivery = (analytics.get("deliverygraphData") or {}).get(tid, [])
+
+            base_row = {
+                "templateId":           tid,
+                "templateName":         name,
+                "category":             tpl["category"],
+                "language":             tpl["language"],
+                "status":               tpl["status"],
+                "folderId":             tpl["folderId"],
+                "folderName":           "",
+                "departamentoInferido": tpl["departamentoInferido"],
+                "sentTotal":            str(analytics.get("sent") or ""),
+                "deliveredTotal":       str(analytics.get("delivered") or ""),
+                "readTotal":            str(analytics.get("read") or ""),
+            }
+
+            if not delivery:
                 analytics_flat.append({
                     **base_row,
-                    "sent":      str(point.get("sent") or ""),
-                    "delivered": str(point.get("delivered") or ""),
-                    "read":      str(point.get("read") or ""),
-                    "startTime": ts_to_iso(point.get("startTime")),
-                    "endTime":   ts_to_iso(point.get("endTime")),
-                    "error":     "",
+                    "sent":      str(analytics.get("sent") or ""),
+                    "delivered": str(analytics.get("delivered") or ""),
+                    "read":      str(analytics.get("read") or ""),
+                    "startTime": "",
+                    "endTime":   "",
+                    "error":     "" if analytics else "no_data",
                 })
+            else:
+                for point in delivery:
+                    analytics_flat.append({
+                        **base_row,
+                        "sent":      str(point.get("sent") or ""),
+                        "delivered": str(point.get("delivered") or ""),
+                        "read":      str(point.get("read") or ""),
+                        "startTime": ts_to_iso(point.get("startTime")),
+                        "endTime":   ts_to_iso(point.get("endTime")),
+                        "error":     "",
+                    })
 
     print(f"  Total registros analytics: {len(analytics_flat)}")
-
-    print("\nAutenticando Google...")
-    token = obter_access_token(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN)
-
-    for sheet_name in ("WA_Analytics", "WA_Templates"):
-        criar_sheet_se_nao_existe(SPREADSHEET_ID, sheet_name, token)
 
     wa_headers = [
         "templateId", "templateName", "category", "language", "status",
@@ -246,13 +319,15 @@ def main():
         "startTime", "endTime", "error",
     ]
     wa_rows = [[r.get(c, "") for c in wa_headers] for r in analytics_flat]
-    limpar_e_gravar(SPREADSHEET_ID, "WA_Analytics", wa_headers, wa_rows, token)
+    # Upsert por templateId + startTime combo
+    upsert_por_data(SPREADSHEET_ID, "WA_Analytics", wa_headers, wa_rows, token, key_cols=["templateId", "startTime"])
 
     tpl_headers = [
         "templateId", "templateName", "category", "language", "status",
         "folderId", "locationId", "createdAt", "updatedAt", "departamentoInferido",
     ]
     tpl_rows = [[r.get(c, "") for c in tpl_headers] for r in templates_flat]
+    # Templates: overwrite (tabela de referencia)
     limpar_e_gravar(SPREADSHEET_ID, "WA_Templates", tpl_headers, tpl_rows, token)
 
     print("\nConcluido com sucesso.")

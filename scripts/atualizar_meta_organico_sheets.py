@@ -1,18 +1,21 @@
 """
 Atualiza Meta Organico (FB + IG + Posts) no Google Sheets via Graph API.
 Roda via GitHub Actions todo dia as 06:10.
+Modo UPSERT com opcao --historico para carga de dados passados.
 """
 
 import json
 import os
 import sys
+import argparse
 import urllib.request
 import urllib.parse
 import urllib.error
 from datetime import date, timedelta
+import time
 
 sys.path.insert(0, os.path.dirname(__file__))
-from sheets_helper import obter_access_token, limpar_e_gravar, criar_sheet_se_nao_existe
+from sheets_helper import obter_access_token, upsert_por_data, criar_sheet_se_nao_existe
 
 META_TOKEN           = os.environ["META_TOKEN"]
 META_PAGE_ID         = os.environ["META_PAGE_ID"]
@@ -49,7 +52,7 @@ def graph_get(path: str, params: dict) -> dict:
         return {}
 
 
-def atualizar_fb(token_g: str, page_token: str):
+def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
     metricas = [
         "page_video_views",
         "page_post_engagements",
@@ -57,71 +60,153 @@ def atualizar_fb(token_g: str, page_token: str):
         "page_actions_post_reactions_total",
     ]
 
-    data = graph_get(f"{META_PAGE_ID}/insights", {
-        "metric":       ",".join(metricas),
-        "period":       "day",
-        "since":        (date.today() - timedelta(days=JANELA_DIAS)).isoformat(),
-        "until":        date.today().isoformat(),
-        "access_token": page_token,
-    })
+    if historico:
+        print("FB: Modo HISTORICO desde 2025-01-01 em chunks de 90 dias")
+        inicio = date(2025, 1, 1)
+        fim = date.today()
+        chunk_dias = 90
+        todos_rows = []
 
-    rows = []
-    for item in data.get("data", []):
-        metrica = item.get("name", "")
-        for val in item.get("values", []):
-            v = val.get("value", 0)
-            if isinstance(v, dict):
-                v = sum(v.values())
-            rows.append([val.get("end_time", "")[:10], metrica, v])
+        current = inicio
+        while current < fim:
+            chunk_end = min(current + timedelta(days=chunk_dias), fim)
+            since = current.isoformat()
+            until = chunk_end.isoformat()
+            print(f"  Periodo: {since} → {until}")
 
-    headers = ["date", "metric", "value"]
+            data = graph_get(f"{META_PAGE_ID}/insights", {
+                "metric":       ",".join(metricas),
+                "period":       "day",
+                "since":        since,
+                "until":        until,
+                "access_token": page_token,
+            })
+
+            for item in data.get("data", []):
+                metrica = item.get("name", "")
+                for val in item.get("values", []):
+                    v = val.get("value", 0)
+                    if isinstance(v, dict):
+                        v = sum(v.values())
+                    todos_rows.append([val.get("end_time", "")[:10], metrica, v])
+
+            current = chunk_end + timedelta(days=1)
+            time.sleep(0.2)
+
+        rows = todos_rows
+    else:
+        data = graph_get(f"{META_PAGE_ID}/insights", {
+            "metric":       ",".join(metricas),
+            "period":       "day",
+            "since":        (date.today() - timedelta(days=JANELA_DIAS)).isoformat(),
+            "until":        date.today().isoformat(),
+            "access_token": page_token,
+        })
+
+        rows = []
+        for item in data.get("data", []):
+            metrica = item.get("name", "")
+            for val in item.get("values", []):
+                v = val.get("value", 0)
+                if isinstance(v, dict):
+                    v = sum(v.values())
+                rows.append([val.get("end_time", "")[:10], metrica, v])
+
+    headers = ["data", "metrica", "value"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "Meta_Organico_FB", token_g)
-    limpar_e_gravar(SPREADSHEET_ID, "Meta_Organico_FB", headers, rows, token_g)
+    upsert_por_data(SPREADSHEET_ID, "Meta_Organico_FB", headers, rows, token_g, key_cols=["data", "metrica"])
 
 
-def atualizar_ig(token_g: str):
+def atualizar_ig(token_g: str, historico: bool = False):
     metricas_day = ["reach", "impressions", "follower_count", "website_clicks"]
     metricas_total = ["accounts_engaged", "profile_views"]
 
-    rows = []
-    since = (date.today() - timedelta(days=JANELA_DIAS)).isoformat()
-    until = date.today().isoformat()
+    if historico:
+        print("IG: Modo HISTORICO desde 2025-01-01 em chunks de 90 dias")
+        inicio = date(2025, 1, 1)
+        fim = date.today()
+        chunk_dias = 90
+        todos_rows = []
 
-    data = graph_get(f"{META_IG_ID}/insights", {
-        "metric":       ",".join(metricas_day),
-        "period":       "day",
-        "since":        since,
-        "until":        until,
-        "access_token": META_TOKEN,
-    })
-    for item in data.get("data", []):
-        metrica = item.get("name", "")
-        for val in item.get("values", []):
-            rows.append([val.get("end_time", "")[:10], metrica, val.get("value", 0)])
+        current = inicio
+        while current < fim:
+            chunk_end = min(current + timedelta(days=chunk_dias), fim)
+            since = current.isoformat()
+            until = chunk_end.isoformat()
+            print(f"  Periodo: {since} → {until}")
 
-    data_total = graph_get(f"{META_IG_ID}/insights", {
-        "metric":       ",".join(metricas_total),
-        "period":       "total_over_range",
-        "since":        since,
-        "until":        until,
-        "metric_type":  "total_value",
-        "access_token": META_TOKEN,
-    })
-    for item in data_total.get("data", []):
-        metrica = item.get("name", "")
-        total_value = item.get("total_value", {})
-        valor = total_value.get("value", 0) if isinstance(total_value, dict) else 0
-        rows.append([until, metrica, valor])
+            data = graph_get(f"{META_IG_ID}/insights", {
+                "metric":       ",".join(metricas_day),
+                "period":       "day",
+                "since":        since,
+                "until":        until,
+                "access_token": META_TOKEN,
+            })
+            for item in data.get("data", []):
+                metrica = item.get("name", "")
+                for val in item.get("values", []):
+                    todos_rows.append([val.get("end_time", "")[:10], metrica, val.get("value", 0)])
 
-    headers = ["date", "metric", "value"]
+            data_total = graph_get(f"{META_IG_ID}/insights", {
+                "metric":       ",".join(metricas_total),
+                "period":       "total_over_range",
+                "since":        since,
+                "until":        until,
+                "metric_type":  "total_value",
+                "access_token": META_TOKEN,
+            })
+            for item in data_total.get("data", []):
+                metrica = item.get("name", "")
+                total_value = item.get("total_value", {})
+                valor = total_value.get("value", 0) if isinstance(total_value, dict) else 0
+                todos_rows.append([until, metrica, valor])
+
+            current = chunk_end + timedelta(days=1)
+            time.sleep(0.2)
+
+        rows = todos_rows
+    else:
+        rows = []
+        since = (date.today() - timedelta(days=JANELA_DIAS)).isoformat()
+        until = date.today().isoformat()
+
+        data = graph_get(f"{META_IG_ID}/insights", {
+            "metric":       ",".join(metricas_day),
+            "period":       "day",
+            "since":        since,
+            "until":        until,
+            "access_token": META_TOKEN,
+        })
+        for item in data.get("data", []):
+            metrica = item.get("name", "")
+            for val in item.get("values", []):
+                rows.append([val.get("end_time", "")[:10], metrica, val.get("value", 0)])
+
+        data_total = graph_get(f"{META_IG_ID}/insights", {
+            "metric":       ",".join(metricas_total),
+            "period":       "total_over_range",
+            "since":        since,
+            "until":        until,
+            "metric_type":  "total_value",
+            "access_token": META_TOKEN,
+        })
+        for item in data_total.get("data", []):
+            metrica = item.get("name", "")
+            total_value = item.get("total_value", {})
+            valor = total_value.get("value", 0) if isinstance(total_value, dict) else 0
+            rows.append([until, metrica, valor])
+
+    headers = ["data", "metrica", "value"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "Meta_Organico_IG", token_g)
-    limpar_e_gravar(SPREADSHEET_ID, "Meta_Organico_IG", headers, rows, token_g)
+    upsert_por_data(SPREADSHEET_ID, "Meta_Organico_IG", headers, rows, token_g, key_cols=["data", "metrica"])
 
 
-def atualizar_posts(token_g: str):
+def atualizar_posts(token_g: str, historico: bool = False):
+    # Nota: API do Meta retorna ~200 posts mais recentes. Para historico completo,
+    # seria necessario rastrear paging. Para agora, buscamos tudo disponivel.
     data = graph_get(f"{META_IG_ID}/media", {
         "fields":       "id,timestamp,media_type,like_count,comments_count,reach,impressions",
-        "limit":        "50",
+        "limit":        "100",
         "access_token": META_TOKEN,
     })
 
@@ -137,24 +222,29 @@ def atualizar_posts(token_g: str):
             post.get("impressions", 0),
         ])
 
-    headers = ["id", "date", "media_type", "likes", "comments", "reach", "impressions"]
+    headers = ["id", "data", "media_type", "likes", "comments", "reach", "impressions"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "IG_Posts", token_g)
-    limpar_e_gravar(SPREADSHEET_ID, "IG_Posts", headers, rows, token_g)
+    # Upsert por ID (unico por post)
+    upsert_por_data(SPREADSHEET_ID, "IG_Posts", headers, rows, token_g, key_cols=["id"])
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Atualiza Meta Organico no Google Sheets")
+    parser.add_argument("--historico", action="store_true", help="Fetch dados historicos desde 2025-01-01")
+    args = parser.parse_args()
+
     print("=== Meta Organico → Google Sheets ===")
     page_token = obter_page_token()
     token_g = obter_access_token(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN)
 
     print("FB Insights...")
-    atualizar_fb(token_g, page_token)
+    atualizar_fb(token_g, page_token, historico=args.historico)
 
     print("IG Insights...")
-    atualizar_ig(token_g)
+    atualizar_ig(token_g, historico=args.historico)
 
     print("IG Posts...")
-    atualizar_posts(token_g)
+    atualizar_posts(token_g, historico=args.historico)
 
     print("Concluido.")
 

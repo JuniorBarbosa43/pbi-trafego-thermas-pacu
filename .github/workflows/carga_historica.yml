@@ -1,23 +1,14 @@
-name: Atualizar Dados -> Google Sheets
+name: Carga Historica -> Google Sheets (desde 01/01/2025)
 
 on:
-  schedule:
-    # Horarios em UTC (BRT = UTC-3)
-    # 06:00 BRT = 09:00 UTC
-    - cron: '0 9 * * *'   # Meta Ads
-    - cron: '10 9 * * *'  # Meta Organico
-    - cron: '20 9 * * *'  # Google Ads
-    - cron: '30 9 * * *'  # WhatsApp GHL
-    - cron: '40 9 * * *'  # ClimaTempo
-  workflow_dispatch:       # Permite execucao manual
+  workflow_dispatch:       # Apenas execucao manual
 
 jobs:
 
   # ---------------------------------------------------------
-  meta-ads:
-    name: Meta Ads -> Sheets
+  clima-historico:
+    name: ClimaTempo Historico
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 9 * * *'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,7 +18,28 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Executar script
+      - name: Carga historica ClimaTempo
+        env:
+          GOOGLE_CLIENT_ID:      ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
+        run: python scripts/atualizar_clima_sheets.py --historico
+
+  # ---------------------------------------------------------
+  meta-ads-historico:
+    name: Meta Ads Historico
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Carga historica Meta Ads
         env:
           META_TOKEN:            ${{ secrets.META_TOKEN }}
           META_AD_ACCOUNT_ID:    ${{ secrets.META_AD_ACCOUNT_ID }}
@@ -35,13 +47,12 @@ jobs:
           GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
-        run: python scripts/atualizar_meta_ads_sheets.py
+        run: python scripts/atualizar_meta_ads_sheets.py --historico
 
   # ---------------------------------------------------------
-  meta-organico:
-    name: Meta Organico -> Sheets
+  meta-organico-historico:
+    name: Meta Organico Historico
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '10 9 * * *'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,7 +62,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Executar script
+      - name: Carga historica Meta Organico
         env:
           META_TOKEN:            ${{ secrets.META_TOKEN }}
           META_PAGE_ID:          ${{ secrets.META_PAGE_ID }}
@@ -59,13 +70,12 @@ jobs:
           GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
-        run: python scripts/atualizar_meta_organico_sheets.py
+        run: python scripts/atualizar_meta_organico_sheets.py --historico
 
   # ---------------------------------------------------------
-  google-ads:
-    name: Google Ads -> Sheets
+  google-ads-historico:
+    name: Google Ads Historico
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '20 9 * * *'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -75,7 +85,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Executar script
+      - name: Carga historica Google Ads
         env:
           GOOGLE_ADS_DEVELOPER_TOKEN:  ${{ secrets.GOOGLE_ADS_DEVELOPER_TOKEN }}
           GOOGLE_ADS_CLIENT_ID:        ${{ secrets.GOOGLE_ADS_CLIENT_ID }}
@@ -87,13 +97,12 @@ jobs:
           GOOGLE_CLIENT_SECRET:        ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN:        ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           SPREADSHEET_ID:              ${{ secrets.SPREADSHEET_ID }}
-        run: python scripts/atualizar_google_ads_sheets.py
+        run: python scripts/atualizar_google_ads_sheets.py --historico
 
   # ---------------------------------------------------------
-  whatsapp:
-    name: WhatsApp GHL -> Sheets
+  whatsapp-historico:
+    name: WhatsApp Historico
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 9 * * *'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -103,7 +112,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Executar script
+      - name: Carga historica WhatsApp
         env:
           GHL_FIREBASE_REFRESH_TOKEN: ${{ secrets.GHL_FIREBASE_REFRESH_TOKEN }}
           GHL_FIREBASE_API_KEY:       ${{ secrets.GHL_FIREBASE_API_KEY }}
@@ -113,26 +122,4 @@ jobs:
           GOOGLE_CLIENT_SECRET:       ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN:       ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           SPREADSHEET_ID:             ${{ secrets.SPREADSHEET_ID }}
-        run: python scripts/atualizar_whatsapp_sheets.py
-
-  # ---------------------------------------------------------
-  clima:
-    name: ClimaTempo -> Sheets
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '40 9 * * *'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Executar script
-        env:
-          GOOGLE_CLIENT_ID:      ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
-          SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
-        run: python scripts/atualizar_clima_sheets.py
+        run: python scripts/atualizar_whatsapp_sheets.py --historico

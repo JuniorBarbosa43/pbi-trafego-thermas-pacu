@@ -2,17 +2,20 @@
 Atualiza Meta Ads campanhas no Google Sheets via Marketing API.
 Roda via GitHub Actions todo dia as 06:00.
 Janela de 14 dias (cobre delay de consolidacao da API).
+Modo UPSERT com opcao --historico para carga de dados passados.
 """
 
 import json
 import os
 import sys
+import argparse
 import urllib.request
 import urllib.parse
 from datetime import date, timedelta
+import time
 
 sys.path.insert(0, os.path.dirname(__file__))
-from sheets_helper import obter_access_token, limpar_e_gravar, criar_sheet_se_nao_existe
+from sheets_helper import obter_access_token, upsert_por_data, criar_sheet_se_nao_existe
 
 # ── Credenciais via GitHub Secrets ─────────────────────────
 META_TOKEN        = os.environ["META_TOKEN"]
@@ -53,28 +56,63 @@ def buscar_paginas(since: str, until: str) -> list:
             query["after"] = after
 
         url = url_base + "?" + urllib.parse.urlencode(query)
-        with urllib.request.urlopen(url) as resp:
-            data = json.loads(resp.read())
+        try:
+            with urllib.request.urlopen(url) as resp:
+                data = json.loads(resp.read())
 
-        registros.extend(data.get("data", []))
-        cursors = data.get("paging", {}).get("cursors", {})
-        after = cursors.get("after")
-        if not after or not data.get("data"):
+            registros.extend(data.get("data", []))
+            cursors = data.get("paging", {}).get("cursors", {})
+            after = cursors.get("after")
+            if not after or not data.get("data"):
+                break
+            time.sleep(0.2)
+        except Exception as e:
+            print(f"  Aviso ao buscar pagina (after={after}): {e}")
             break
 
     return registros
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Atualiza Meta Ads no Google Sheets")
+    parser.add_argument("--historico", action="store_true", help="Fetch dados historicos desde 2025-01-01")
+    args = parser.parse_args()
+
     print("=== Meta Ads → Google Sheets ===")
 
-    # Periodo: sempre ultimos 14 dias + fallback se primeira vez
-    until = (date.today() - timedelta(days=1)).isoformat()
-    since = (date.today() - timedelta(days=JANELA_DIAS)).isoformat()
+    token = obter_access_token(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN)
+    criar_sheet_se_nao_existe(SPREADSHEET_ID, SHEET_NAME, token)
 
-    print(f"Periodo: {since} → {until}")
-    registros = buscar_paginas(since, until)
-    print(f"Registros obtidos: {len(registros)}")
+    if args.historico:
+        print("Modo HISTORICO: fetchando dados desde 2025-01-01 em chunks de 30 dias")
+        inicio = date(2025, 1, 1)
+        fim = date.today()
+        chunk_dias = 30
+        todos_registros = []
+
+        current = inicio
+        while current < fim:
+            chunk_end = min(current + timedelta(days=chunk_dias), fim)
+            since = current.isoformat()
+            until = chunk_end.isoformat()
+            print(f"  Periodo: {since} → {until}")
+
+            registros = buscar_paginas(since, until)
+            todos_registros.extend(registros)
+            print(f"    Registros neste chunk: {len(registros)}")
+
+            current = chunk_end + timedelta(days=1)
+            time.sleep(0.3)
+
+        registros = todos_registros
+        print(f"Total registros historicos obtidos: {len(registros)}")
+    else:
+        # Modo incremental: 14 dias
+        until = (date.today() - timedelta(days=1)).isoformat()
+        since = (date.today() - timedelta(days=JANELA_DIAS)).isoformat()
+        print(f"Modo INCREMENTAL: Periodo: {since} → {until}")
+        registros = buscar_paginas(since, until)
+        print(f"Registros obtidos: {len(registros)}")
 
     # Converte para linhas
     rows = []
@@ -91,10 +129,8 @@ def main():
             round(float(r.get("ctr", 0)), 4),
         ])
 
-    # Autentica no Google
-    token = obter_access_token(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN)
-    criar_sheet_se_nao_existe(SPREADSHEET_ID, SHEET_NAME, token)
-    limpar_e_gravar(SPREADSHEET_ID, SHEET_NAME, HEADERS, rows, token)
+    # Upsert por date_start
+    upsert_por_data(SPREADSHEET_ID, SHEET_NAME, HEADERS, rows, token, key_cols=["date_start"])
 
     print("Concluido.")
 

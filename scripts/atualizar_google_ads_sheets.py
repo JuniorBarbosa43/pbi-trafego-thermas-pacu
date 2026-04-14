@@ -2,18 +2,21 @@
 Atualiza Google Ads campanhas no Google Sheets via Google Ads API.
 Roda via GitHub Actions todo dia as 06:20.
 Janela de 14 dias (cobre delay de consolidacao da API).
+Modo UPSERT com opcao --historico para carga de dados passados.
 """
 
 import json
 import os
 import sys
+import argparse
 import urllib.request
 import urllib.parse
 import urllib.error
 from datetime import date, timedelta
+import time
 
 sys.path.insert(0, os.path.dirname(__file__))
-from sheets_helper import obter_access_token, limpar_e_gravar, criar_sheet_se_nao_existe
+from sheets_helper import obter_access_token, upsert_por_data, criar_sheet_se_nao_existe
 
 # Credenciais via GitHub Secrets
 GOOGLE_CLIENT_ID      = os.environ["GOOGLE_CLIENT_ID"]
@@ -137,21 +140,53 @@ def extrair_rows(api_results: list) -> list:
 
 
 def main():
-    print("=== Google Ads → Google Sheets ===")
+    parser = argparse.ArgumentParser(description="Atualiza Google Ads no Google Sheets")
+    parser.add_argument("--historico", action="store_true", help="Fetch dados historicos desde 2025-01-01")
+    args = parser.parse_args()
 
-    since = (date.today() - timedelta(days=JANELA_DIAS)).isoformat()
-    until = (date.today() - timedelta(days=1)).isoformat()
-    print(f"Periodo: {since} → {until}")
+    print("=== Google Ads → Google Sheets ===")
 
     token_ads = obter_google_ads_token()
     token_sheets = obter_access_token(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN)
 
-    api_results = buscar_google_ads(token_ads, since, until)
-    rows = extrair_rows(api_results)
-    print(f"Registros obtidos: {len(rows)}")
-
     criar_sheet_se_nao_existe(SPREADSHEET_ID, SHEET_NAME, token_sheets)
-    limpar_e_gravar(SPREADSHEET_ID, SHEET_NAME, HEADERS, rows, token_sheets)
+
+    if args.historico:
+        print("Modo HISTORICO: fetchando dados desde 2025-01-01 em chunks de 30 dias")
+        inicio = date(2025, 1, 1)
+        fim = date.today()
+        chunk_dias = 30
+        todos_rows = []
+
+        current = inicio
+        while current < fim:
+            chunk_end = min(current + timedelta(days=chunk_dias), fim)
+            since = current.isoformat()
+            until = chunk_end.isoformat()
+            print(f"  Periodo: {since} → {until}")
+
+            api_results = buscar_google_ads(token_ads, since, until)
+            rows = extrair_rows(api_results)
+            todos_rows.extend(rows)
+            print(f"    Registros neste chunk: {len(rows)}")
+
+            current = chunk_end + timedelta(days=1)
+            time.sleep(0.3)
+
+        rows = todos_rows
+        print(f"Total registros historicos obtidos: {len(rows)}")
+    else:
+        # Modo incremental: 14 dias
+        since = (date.today() - timedelta(days=JANELA_DIAS)).isoformat()
+        until = (date.today() - timedelta(days=1)).isoformat()
+        print(f"Modo INCREMENTAL: Periodo: {since} → {until}")
+
+        api_results = buscar_google_ads(token_ads, since, until)
+        rows = extrair_rows(api_results)
+        print(f"Registros obtidos: {len(rows)}")
+
+    # Upsert por date
+    upsert_por_data(SPREADSHEET_ID, SHEET_NAME, HEADERS, rows, token_sheets, key_cols=["date"])
 
     print("Concluido.")
 
