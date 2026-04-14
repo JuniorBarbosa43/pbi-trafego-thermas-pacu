@@ -253,8 +253,22 @@ def upsert_por_data(spreadsheet_id: str, sheet_name: str, headers: list, rows: l
     try:
         key_indices_existing = [existing_headers.index(col) for col in key_cols]
     except ValueError:
-        print(f"  AVISO: coluna chave nao encontrada nos dados existentes. Usando modo APPEND.")
-        return append_dados(spreadsheet_id, sheet_name, headers, rows, token)
+        # Headers existentes incompativeis (aba antiga ou schema diferente)
+        # Limpa a aba e reescreve do zero com os novos headers
+        print(f"  AVISO: headers existentes incompativeis com key_cols={key_cols}. Reescrevendo aba do zero.")
+        all_values = [headers] + rows
+        sheets_request("POST", f"{base}/values:batchClear", token, {
+            "ranges": [f"{sheet_name}!A:ZZ"]
+        })
+        range_str = f"{sheet_name}!A1"
+        body = {
+            "valueInputOption": "RAW",
+            "data": [{"range": range_str, "values": all_values}]
+        }
+        result = sheets_request("POST", f"{base}/values:batchUpdate", token, body)
+        total = result.get("totalUpdatedCells", 0)
+        print(f"  Sheets '{sheet_name}': {len(rows)} linhas gravadas ({total} celulas) [REESCRITA - headers incompativeis]")
+        return (len(rows), 0)
 
     # Filtra linhas antigas que NAO estao sendo atualizadas
     existing_rows = existing_data[1:] if len(existing_data) > 1 else []
