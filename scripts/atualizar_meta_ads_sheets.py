@@ -50,23 +50,28 @@ def buscar_paginas(since: str, until: str) -> list:
     registros = []
     url = url_base + "?" + urllib.parse.urlencode(base_query)
 
+    pagina = 0
     while url:
+        pagina += 1
         try:
             with urllib.request.urlopen(url) as resp:
                 data = json.loads(resp.read())
 
             page_data = data.get("data", [])
             registros.extend(page_data)
+            print(f"    Pagina {pagina}: {len(page_data)} registros")
 
             # Usar o link 'next' para paginacao (mais confiavel que cursors)
             next_url = data.get("paging", {}).get("next")
+            if not page_data:
+                print(f"    Sem mais dados. Paging: {data.get('paging', {})}")
             if next_url and page_data:
                 url = next_url
                 time.sleep(0.2)
             else:
                 url = None
         except Exception as e:
-            print(f"  Aviso ao buscar pagina: {e}")
+            print(f"  ERRO ao buscar pagina {pagina}: {e}")
             url = None
 
     return registros
