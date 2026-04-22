@@ -32,6 +32,29 @@ FIREBASE_API_KEY       = os.environ["GHL_FIREBASE_API_KEY"]
 LOCATION_ID  = os.environ["GHL_LOCATION"]
 WABA_ID      = os.environ["GHL_WABA_ID"]
 
+RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+
+def _read_json_with_retry(req, timeout: int, label: str, max_attempts: int = 5):
+    for attempt in range(1, max_attempts + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read())
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", errors="replace")
+            if e.code in RETRYABLE_STATUS and attempt < max_attempts:
+                wait_s = min(2 ** (attempt - 1), 20)
+                print(f"  AVISO {label}: HTTP {e.code} (tentativa {attempt}/{max_attempts}), retry em {wait_s}s")
+                time.sleep(wait_s)
+                continue
+            raise RuntimeError(f"{label} falhou com HTTP {e.code}: {body[:300]}") from e
+        except urllib.error.URLError as e:
+            if attempt < max_attempts:
+                wait_s = min(2 ** (attempt - 1), 20)
+                print(f"  AVISO {label}: erro de rede ({e}), retry em {wait_s}s")
+                time.sleep(wait_s)
+                continue
+            raise RuntimeError(f"{label} falhou por erro de rede: {e}") from e
+
 def obter_ghl_token():
     fb_data = urllib.parse.urlencode({
         "grant_type":    "refresh_token",
@@ -43,8 +66,12 @@ def obter_ghl_token():
         method="POST"
     )
     fb_req.add_header("Content-Type", "application/x-www-form-urlencoded")
-    with urllib.request.urlopen(fb_req, timeout=30) as resp:
-        fb_resp = json.loads(resp.read())
+    fb_resp = _read_json_with_retry(
+        fb_req,
+        timeout=30,
+        label="Firebase securetoken",
+        max_attempts=5,
+    )
     id_token = fb_resp["id_token"]
     print(f"  Firebase ID token obtido (exp ~1h)")
 
@@ -122,12 +149,25 @@ def ghl_get(url: str) -> dict:
     req.add_header("app-name", "spm-ts")
     req.add_header("route-name", "whatsapp-v1")
     req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36")
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read())
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"HTTP {e.code} em {url}: {body}") from e
+    for attempt in range(1, 5 + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                return json.loads(resp.read())
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", errors="replace")
+            if e.code in RETRYABLE_STATUS and attempt < 5:
+                wait_s = min(2 ** (attempt - 1), 20)
+                print(f"  AVISO GHL GET: HTTP {e.code} (tentativa {attempt}/5), retry em {wait_s}s")
+                time.sleep(wait_s)
+                continue
+            raise RuntimeError(f"HTTP {e.code} em {url}: {body}") from e
+        except urllib.error.URLError as e:
+            if attempt < 5:
+                wait_s = min(2 ** (attempt - 1), 20)
+                print(f"  AVISO GHL GET: erro de rede ({e}), retry em {wait_s}s")
+                time.sleep(wait_s)
+                continue
+            raise RuntimeError(f"Erro de rede em {url}: {e}") from e
 
 def fetch_templates() -> list:
     url = f"{BASE_URL}/phone-system/whatsapp/location/{LOCATION_ID}/template"
