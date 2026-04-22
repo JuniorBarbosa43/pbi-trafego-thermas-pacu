@@ -295,6 +295,19 @@ def extrair_rows(api_results: list) -> list:
     return rows
 
 
+def log_resumo_datas(rows: list) -> None:
+    datas = sorted({str(row[0]) for row in rows if row and row[0]})
+    if not datas:
+        print("Resumo datas: nenhum registro retornado pela API.")
+        return
+    print(
+        "Resumo datas API: "
+        f"min={datas[0]} max={datas[-1]} qtd_datas={len(datas)}"
+    )
+    ultimas = ", ".join(datas[-7:])
+    print(f"Ultimas datas retornadas: {ultimas}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Atualiza Google Ads no Google Sheets")
     parser.add_argument(
@@ -348,6 +361,7 @@ def main() -> None:
         api_results = buscar_google_ads(token_ads, since, until)
         rows = extrair_rows(api_results)
         print(f"Registros obtidos: {len(rows)}")
+        log_resumo_datas(rows)
 
     upsert_por_data(
         SPREADSHEET_ID,
