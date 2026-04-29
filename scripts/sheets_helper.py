@@ -24,8 +24,52 @@ def _get_spreadsheet_id() -> str:
     return os.getenv("SPREADSHEET_ID", "")
 
 
-def obter_access_token(client_id: str, client_secret: str, refresh_token: str) -> str:
+def normalizar_secret(value: str) -> str:
+    """Remove quebras de linha e aspas acidentais em secrets do GitHub."""
+    value = (value or "").strip()
+    value = value.replace("\\r", "").replace("\\n", "").strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+        value = value[1:-1].strip()
+    if "%" in value:
+        value = urllib.parse.unquote(value).strip()
+    return value
+
+
+def _redact(text: str, secrets: list = None) -> str:
+    text = text or ""
+    for secret in secrets or []:
+        secret = normalizar_secret(secret)
+        if len(secret) >= 4:
+            text = text.replace(secret, "***")
+    return text
+
+
+def _http_error_message(label: str, err: urllib.error.HTTPError, secrets: list = None) -> str:
+    body = err.read().decode("utf-8", errors="replace")
+    body = _redact(body, secrets).strip()
+    if len(body) > 700:
+        body = body[:700] + "..."
+    if body:
+        return f"{label} falhou com HTTP {err.code}: {body}"
+    return f"{label} falhou com HTTP {err.code}: {err.reason}"
+
+
+def obter_access_token(client_id: str, client_secret: str, refresh_token: str, service_name: str = "Google Sheets") -> str:
     """Troca o refresh token por um access token valido."""
+    client_id = normalizar_secret(client_id)
+    client_secret = normalizar_secret(client_secret)
+    refresh_token = normalizar_secret(refresh_token)
+
+    missing = []
+    if not client_id:
+        missing.append("client_id")
+    if not client_secret:
+        missing.append("client_secret")
+    if not refresh_token:
+        missing.append("refresh_token")
+    if missing:
+        raise RuntimeError(f"Credenciais OAuth ausentes para {service_name}: {', '.join(missing)}")
+
     data = urllib.parse.urlencode({
         "client_id":     client_id,
         "client_secret": client_secret,
@@ -40,19 +84,34 @@ def obter_access_token(client_id: str, client_secret: str, refresh_token: str) -
     )
     req.add_header("Content-Type", "application/x-www-form-urlencoded")
 
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read())["access_token"]
+    try:
+        with urllib.request.urlopen(req) as resp:
+            payload = json.loads(resp.read())
+    except urllib.error.HTTPError as err:
+        raise RuntimeError(
+            _http_error_message(f"OAuth {service_name}", err, [client_id, client_secret, refresh_token])
+        ) from err
+
+    access_token = payload.get("access_token")
+    if not access_token:
+        msg = _redact(str(payload), [client_id, client_secret, refresh_token])
+        raise RuntimeError(f"OAuth {service_name} nao retornou access_token: {msg}")
+    return access_token
 
 
 def sheets_request(method: str, url: str, token: str, body=None):
     """Faz uma requisicao autenticada para a Sheets API."""
+    token = normalizar_secret(token)
     req = urllib.request.Request(url, method=method)
     req.add_header("Authorization", f"Bearer {token}")
     req.add_header("Content-Type", "application/json")
     if body:
         req.data = json.dumps(body).encode("utf-8")
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read())
+    try:
+        with urllib.request.urlopen(req) as resp:
+            return json.loads(resp.read())
+    except urllib.error.HTTPError as err:
+        raise RuntimeError(_http_error_message("Google Sheets API", err, [token])) from err
 
 
 def ler_dados(spreadsheet_id: str, sheet_name: str, token: str) -> List[List]:
