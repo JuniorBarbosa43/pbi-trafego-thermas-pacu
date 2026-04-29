@@ -17,15 +17,15 @@ from datetime import date, timedelta
 from typing import List
 
 sys.path.insert(0, os.path.dirname(__file__))
-from sheets_helper import criar_sheet_se_nao_existe, obter_access_token, upsert_por_data
+from sheets_helper import criar_sheet_se_nao_existe, normalizar_secret, obter_access_token, upsert_por_data
 
 
 def _pick_env(primary: str, fallback: str = "") -> str:
-    value = os.environ.get(primary, "").strip()
+    value = normalizar_secret(os.environ.get(primary, ""))
     if value:
         return value
     if fallback:
-        return os.environ.get(fallback, "").strip()
+        return normalizar_secret(os.environ.get(fallback, ""))
     return ""
 
 
@@ -124,28 +124,12 @@ def versoes_tentativa() -> List[str]:
 
 def obter_google_ads_token() -> str:
     """Troca refresh token por access token com escopo Google Ads."""
-    data = urllib.parse.urlencode(
-        {
-            "client_id": GOOGLE_CLIENT_ID,
-            "client_secret": GOOGLE_CLIENT_SECRET,
-            "refresh_token": GOOGLE_REFRESH_TOKEN,
-            "grant_type": "refresh_token",
-        }
-    ).encode("utf-8")
-
-    req = urllib.request.Request(
-        "https://oauth2.googleapis.com/token",
-        data=data,
-        method="POST",
+    return obter_access_token(
+        GOOGLE_CLIENT_ID,
+        GOOGLE_CLIENT_SECRET,
+        GOOGLE_REFRESH_TOKEN,
+        service_name="Google Ads",
     )
-    req.add_header("Content-Type", "application/x-www-form-urlencoded")
-
-    with urllib.request.urlopen(req) as resp:
-        payload = json.loads(resp.read())
-        access_token = payload.get("access_token")
-        if not access_token:
-            raise RuntimeError(f"OAuth sem access_token para Google Ads: {payload}")
-        return access_token
 
 
 def montar_query(since: str, until: str) -> str:

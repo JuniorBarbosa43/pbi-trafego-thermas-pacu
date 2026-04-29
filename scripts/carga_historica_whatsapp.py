@@ -26,7 +26,7 @@ import urllib.error
 import time
 
 sys.path.insert(0, os.path.dirname(__file__))
-from sheets_helper import obter_access_token, limpar_e_gravar, criar_sheet_se_nao_existe
+from sheets_helper import normalizar_secret, obter_access_token, limpar_e_gravar, criar_sheet_se_nao_existe
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--start", default="2026-02-15", help="Data inicio (YYYY-MM-DD)")
@@ -36,10 +36,10 @@ args = parser.parse_args()
 START_DATE = datetime.date.fromisoformat(args.start)
 END_DATE   = datetime.date.fromisoformat(args.end)
 
-FIREBASE_REFRESH_TOKEN = os.environ["GHL_FIREBASE_REFRESH_TOKEN"]
-FIREBASE_API_KEY       = os.environ["GHL_FIREBASE_API_KEY"]
-LOCATION_ID  = os.environ["GHL_LOCATION"]
-WABA_ID      = os.environ["GHL_WABA_ID"]
+FIREBASE_REFRESH_TOKEN = normalizar_secret(os.environ["GHL_FIREBASE_REFRESH_TOKEN"])
+FIREBASE_API_KEY       = normalizar_secret(os.environ["GHL_FIREBASE_API_KEY"])
+LOCATION_ID  = normalizar_secret(os.environ["GHL_LOCATION"])
+WABA_ID      = normalizar_secret(os.environ["GHL_WABA_ID"])
 
 def obter_ghl_token():
     fb_data = urllib.parse.urlencode({
@@ -92,10 +92,10 @@ def obter_ghl_token():
 print("Obtendo GHL token via Firebase...")
 GHL_TOKEN, FIREBASE_ID_TOKEN = obter_ghl_token()
 
-GOOGLE_CLIENT_ID     = os.environ["GOOGLE_CLIENT_ID"]
-GOOGLE_CLIENT_SECRET = os.environ["GOOGLE_CLIENT_SECRET"]
-GOOGLE_REFRESH_TOKEN = os.environ["GOOGLE_REFRESH_TOKEN"]
-SPREADSHEET_ID       = os.environ["SPREADSHEET_ID"]
+GOOGLE_CLIENT_ID     = normalizar_secret(os.environ["GOOGLE_CLIENT_ID"])
+GOOGLE_CLIENT_SECRET = normalizar_secret(os.environ["GOOGLE_CLIENT_SECRET"])
+GOOGLE_REFRESH_TOKEN = normalizar_secret(os.environ["GOOGLE_REFRESH_TOKEN"])
+SPREADSHEET_ID       = normalizar_secret(os.environ["SPREADSHEET_ID"])
 
 BASE_URL = "https://backend.leadconnectorhq.com"
 

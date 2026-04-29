@@ -10,6 +10,19 @@ on:
     - cron: '30 9 * * *'  # WhatsApp GHL
     - cron: '40 9 * * *'  # ClimaTempo
   workflow_dispatch:       # Permite execucao manual
+    inputs:
+      fonte:
+        description: "Qual integracao executar?"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - meta-ads
+          - meta-organico
+          - google-ads
+          - whatsapp
+          - clima
 
 jobs:
 
@@ -17,7 +30,9 @@ jobs:
   meta-ads:
     name: Meta Ads -> Sheets
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 9 * * *'
+    if: >
+      (github.event_name == 'workflow_dispatch' && (inputs.fonte == 'all' || inputs.fonte == 'meta-ads')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 9 * * *')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,7 +56,9 @@ jobs:
   meta-organico:
     name: Meta Organico -> Sheets
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '10 9 * * *'
+    if: >
+      (github.event_name == 'workflow_dispatch' && (inputs.fonte == 'all' || inputs.fonte == 'meta-organico')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '10 9 * * *')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -66,7 +83,9 @@ jobs:
   google-ads:
     name: Google Ads -> Sheets
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '20 9 * * *'
+    if: >
+      (github.event_name == 'workflow_dispatch' && (inputs.fonte == 'all' || inputs.fonte == 'google-ads')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '20 9 * * *')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -94,7 +113,9 @@ jobs:
   whatsapp:
     name: WhatsApp GHL -> Sheets
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 9 * * *'
+    if: >
+      (github.event_name == 'workflow_dispatch' && (inputs.fonte == 'all' || inputs.fonte == 'whatsapp')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '30 9 * * *')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -120,7 +141,9 @@ jobs:
   clima:
     name: ClimaTempo -> Sheets
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '40 9 * * *'
+    if: >
+      (github.event_name == 'workflow_dispatch' && (inputs.fonte == 'all' || inputs.fonte == 'clima')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '40 9 * * *')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
