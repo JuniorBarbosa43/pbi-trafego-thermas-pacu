@@ -24,7 +24,10 @@ SPREADSHEET_ID       = os.environ["SPREADSHEET_ID"]
 
 SHEET_NAME = "Meta_Ads_Campanhas"
 HEADERS    = ["campaign_id", "campaign_name", "date_start", "date_stop",
-              "impressions", "reach", "clicks", "spend", "ctr"]
+              "impressions", "reach", "clicks", "spend", "ctr",
+              "leads", "messaging_conversations", "contacts", "complete_registrations",
+              "add_to_cart", "initiate_checkout", "purchases", "conversions_total",
+              "purchase_value", "conversion_action_types"]
 
 
 def main():
@@ -56,6 +59,16 @@ def main():
             int(r.get("clicks", 0)),
             round(float(r.get("spend", 0)), 2),
             round(float(r.get("ctr", 0)), 4),
+            round(float(r.get("leads", 0)), 2),
+            round(float(r.get("messaging_conversations", 0)), 2),
+            round(float(r.get("contacts", 0)), 2),
+            round(float(r.get("complete_registrations", 0)), 2),
+            round(float(r.get("add_to_cart", 0)), 2),
+            round(float(r.get("initiate_checkout", 0)), 2),
+            round(float(r.get("purchases", 0)), 2),
+            round(float(r.get("conversions_total", 0)), 2),
+            round(float(r.get("purchase_value", 0)), 2),
+            r.get("conversion_action_types", ""),
         ])
 
     token = obter_access_token(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN)
