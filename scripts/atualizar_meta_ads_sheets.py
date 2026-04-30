@@ -13,6 +13,7 @@ import sys
 import argparse
 import urllib.request
 import urllib.parse
+import urllib.error
 from datetime import date, timedelta
 import time
 
@@ -32,6 +33,7 @@ SPREADSHEET_ID = os.environ["SPREADSHEET_ID"]
 SHEET_NAME = "Meta_Ads_Campanhas"
 JANELA_DIAS = 500  # historico desde 01/01/2025 (modo incremental)
 FALLBACK_DIAS = 500
+RETRYABLE_STATUS = {429, 500, 502, 503, 504}
 
 # actions e action_values trazem arrays com todos os tipos de conversão.
 # Filtramos somente o tipo "purchase" no parse abaixo.
@@ -128,6 +130,30 @@ def _listar_action_types(lista: list) -> str:
     return ", ".join(sorted(set(tipos)))
 
 
+def _urlopen_json_with_retry(url: str, label: str, max_attempts: int = 5) -> dict:
+    for attempt in range(1, max_attempts + 1):
+        try:
+            with urllib.request.urlopen(url, timeout=60) as resp:
+                return json.loads(resp.read())
+        except urllib.error.HTTPError as err:
+            body = err.read().decode("utf-8", errors="replace").strip()
+            retryable = err.code in RETRYABLE_STATUS
+            if retryable and attempt < max_attempts:
+                wait_s = min(2 ** (attempt - 1), 20)
+                print(f"  AVISO {label}: HTTP {err.code} tentativa {attempt}/{max_attempts}; retry em {wait_s}s")
+                time.sleep(wait_s)
+                continue
+            detail = body[:500] if body else err.reason
+            raise RuntimeError(f"{label} falhou com HTTP {err.code}: {detail}") from err
+        except urllib.error.URLError as err:
+            if attempt < max_attempts:
+                wait_s = min(2 ** (attempt - 1), 20)
+                print(f"  AVISO {label}: erro de rede tentativa {attempt}/{max_attempts}; retry em {wait_s}s")
+                time.sleep(wait_s)
+                continue
+            raise RuntimeError(f"{label} falhou por erro de rede: {err}") from err
+
+
 def buscar_paginas(since: str, until: str) -> list:
     """Busca todos os dados paginados da API usando o link 'next' da paginacao."""
     base_query = {
@@ -144,22 +170,17 @@ def buscar_paginas(since: str, until: str) -> list:
     pagina = 0
     while url:
         pagina += 1
-        try:
-            with urllib.request.urlopen(url) as resp:
-                data = json.loads(resp.read())
-            page_data = data.get("data", [])
-            registros.extend(page_data)
-            print(f"  Pagina {pagina}: {len(page_data)} registros")
-            next_url = data.get("paging", {}).get("next")
-            if not page_data:
-                print(f"  Sem mais dados. Paging: {data.get('paging', {})}")
-            if next_url and page_data:
-                url = next_url
-                time.sleep(0.2)
-            else:
-                url = None
-        except Exception as e:
-            print(f"  ERRO ao buscar pagina {pagina}: {e}")
+        data = _urlopen_json_with_retry(url, f"Meta Ads pagina {pagina}")
+        page_data = data.get("data", [])
+        registros.extend(page_data)
+        print(f"  Pagina {pagina}: {len(page_data)} registros")
+        next_url = data.get("paging", {}).get("next")
+        if not page_data:
+            print(f"  Sem mais dados. Paging: {data.get('paging', {})}")
+        if next_url and page_data:
+            url = next_url
+            time.sleep(0.2)
+        else:
             url = None
     return registros
 
