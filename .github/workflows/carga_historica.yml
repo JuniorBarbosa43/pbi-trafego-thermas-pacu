@@ -1,4 +1,4 @@
-name: Carga Historica -> Google Sheets (desde 01/01/2025)
+name: Carga Historica -> Google Sheets
 
 on:
   workflow_dispatch:       # Apenas execucao manual
@@ -47,7 +47,7 @@ jobs:
           GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
-        run: python scripts/atualizar_meta_ads_sheets.py --historico
+        run: python scripts/atualizar_meta_ads_sheets.py --historico --start-date 2024-12-01
 
   # ---------------------------------------------------------
   meta-organico-historico:

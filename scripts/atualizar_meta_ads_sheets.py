@@ -31,8 +31,9 @@ SPREADSHEET_ID = os.environ["SPREADSHEET_ID"]
 # ──────────────────────────────────────────────────────────
 
 SHEET_NAME = "Meta_Ads_Campanhas"
-JANELA_DIAS = 500  # historico desde 01/01/2025 (modo incremental)
+JANELA_DIAS = 500
 FALLBACK_DIAS = 500
+HISTORICO_START_DATE = "2024-12-01"
 RETRYABLE_STATUS = {429, 500, 502, 503, 504}
 
 # actions e action_values trazem arrays com todos os tipos de conversão.
@@ -195,7 +196,10 @@ def buscar_paginas(since: str, until: str) -> list:
 def main():
     parser = argparse.ArgumentParser(description="Atualiza Meta Ads no Google Sheets")
     parser.add_argument("--historico", action="store_true",
-                        help="Fetch dados historicos desde 2025-01-01")
+                        help="Fetch dados historicos desde --start-date")
+    parser.add_argument("--start-date",
+                        default=os.getenv("META_ADS_START_DATE", HISTORICO_START_DATE),
+                        help="Data inicial do modo historico (YYYY-MM-DD)")
     args = parser.parse_args()
 
     print("=== Meta Ads → Google Sheets ===")
@@ -203,8 +207,8 @@ def main():
     criar_sheet_se_nao_existe(SPREADSHEET_ID, SHEET_NAME, token)
 
     if args.historico:
-        print("Modo HISTORICO: fetchando dados desde 2025-01-01 em chunks de 30 dias")
-        inicio = date(2025, 1, 1)
+        inicio = date.fromisoformat(args.start_date)
+        print(f"Modo HISTORICO: fetchando dados desde {inicio.isoformat()} em chunks de 30 dias")
         fim = date.today()
         chunk_dias = 30
         todos_registros = []
