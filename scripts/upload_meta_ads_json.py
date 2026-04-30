@@ -27,7 +27,8 @@ HEADERS    = ["campaign_id", "campaign_name", "date_start", "date_stop",
               "impressions", "reach", "clicks", "spend", "ctr",
               "leads", "messaging_conversations", "contacts", "complete_registrations",
               "add_to_cart", "initiate_checkout", "purchases", "conversions_total",
-              "purchase_value", "conversion_action_types"]
+              "purchase_value", "meta_revenue", "meta_roas",
+              "conversion_action_types", "conversion_value_action_types"]
 
 
 def main():
@@ -68,7 +69,10 @@ def main():
             round(float(r.get("purchases", 0)), 2),
             round(float(r.get("conversions_total", 0)), 2),
             round(float(r.get("purchase_value", 0)), 2),
+            round(float(r.get("meta_revenue", r.get("purchase_value", 0))), 2),
+            round(float(r.get("meta_roas", 0)), 4),
             r.get("conversion_action_types", ""),
+            r.get("conversion_value_action_types", ""),
         ])
 
     token = obter_access_token(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN)
