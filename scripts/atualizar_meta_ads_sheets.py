@@ -48,7 +48,8 @@ HEADERS = [
     "impressions", "reach", "clicks", "spend", "ctr",
     "leads", "messaging_conversations", "contacts", "complete_registrations",
     "add_to_cart", "initiate_checkout", "purchases", "conversions_total",
-    "purchase_value", "conversion_action_types",
+    "purchase_value", "meta_revenue", "meta_roas",
+    "conversion_action_types", "conversion_value_action_types",
 ]
 
 CONVERSION_GROUPS = {
@@ -128,6 +129,12 @@ def _listar_action_types(lista: list) -> str:
         if action_type and valor:
             tipos.append(action_type)
     return ", ".join(sorted(set(tipos)))
+
+
+def _dividir_seguro(numerador: float, denominador: float) -> float:
+    if not denominador:
+        return 0.0
+    return numerador / denominador
 
 
 def _urlopen_json_with_retry(url: str, label: str, max_attempts: int = 5) -> dict:
@@ -232,7 +239,11 @@ def main():
         }
         conversions_total = sum(conversions.values())
         purchase_value = _extrair_primeiro_grupo(action_values, PURCHASE_VALUE_ACTION_TYPES)
+        meta_revenue = purchase_value
+        spend = float(r.get("spend", 0))
+        meta_roas = _dividir_seguro(meta_revenue, spend)
         conversion_action_types = _listar_action_types(actions)
+        conversion_value_action_types = _listar_action_types(action_values)
 
         rows.append([
             r.get("campaign_id", ""),
@@ -242,7 +253,7 @@ def main():
             int(r.get("impressions", 0)),
             int(r.get("reach", 0)),
             int(r.get("clicks", 0)),
-            round(float(r.get("spend", 0)), 2),
+            round(spend, 2),
             round(float(r.get("ctr", 0)), 4),
             round(conversions["leads"], 2),
             round(conversions["messaging_conversations"], 2),
@@ -253,7 +264,10 @@ def main():
             round(conversions["purchases"], 2),
             round(conversions_total, 2),
             round(purchase_value, 2),
+            round(meta_revenue, 2),
+            round(meta_roas, 4),
             conversion_action_types,
+            conversion_value_action_types,
         ])
 
     # Upsert por date_start + campaign_id (evita duplicar campanhas no mesmo dia)
