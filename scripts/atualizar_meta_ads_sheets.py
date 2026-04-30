@@ -44,7 +44,56 @@ FIELDS = (
 HEADERS = [
     "campaign_id", "campaign_name", "date_start", "date_stop",
     "impressions", "reach", "clicks", "spend", "ctr",
-    "purchases", "purchase_value",
+    "leads", "messaging_conversations", "contacts", "complete_registrations",
+    "add_to_cart", "initiate_checkout", "purchases", "conversions_total",
+    "purchase_value", "conversion_action_types",
+]
+
+CONVERSION_GROUPS = {
+    "leads": [
+        "lead",
+        "onsite_conversion.lead_grouped",
+        "offsite_conversion.fb_pixel_lead",
+        "leadgen_grouped",
+        "onsite_conversion.lead",
+    ],
+    "messaging_conversations": [
+        "onsite_conversion.messaging_conversation_started_7d",
+        "onsite_conversion.messaging_first_reply",
+        "omni_messaging_conversation_started_7d",
+    ],
+    "contacts": [
+        "contact",
+        "contact_total",
+        "offsite_conversion.fb_pixel_contact",
+        "onsite_conversion.contact",
+    ],
+    "complete_registrations": [
+        "complete_registration",
+        "offsite_conversion.fb_pixel_complete_registration",
+        "omni_complete_registration",
+    ],
+    "add_to_cart": [
+        "add_to_cart",
+        "offsite_conversion.fb_pixel_add_to_cart",
+        "omni_add_to_cart",
+    ],
+    "initiate_checkout": [
+        "initiate_checkout",
+        "offsite_conversion.fb_pixel_initiate_checkout",
+        "omni_initiated_checkout",
+    ],
+    "purchases": [
+        "purchase",
+        "omni_purchase",
+        "offsite_conversion.fb_pixel_purchase",
+    ],
+}
+
+PURCHASE_VALUE_ACTION_TYPES = [
+    "purchase",
+    "omni_purchase",
+    "offsite_conversion.fb_pixel_purchase",
 ]
 
 
@@ -54,6 +103,29 @@ def _extrair_action(lista: list, action_type: str) -> float:
         if item.get("action_type") == action_type:
             return float(item.get("value", 0))
     return 0.0
+
+
+def _extrair_primeiro_grupo(lista: list, action_types: list) -> float:
+    """Extrai a primeira variante encontrada para evitar dupla contagem."""
+    for action_type in action_types:
+        valor = _extrair_action(lista, action_type)
+        if valor:
+            return valor
+    return 0.0
+
+
+def _listar_action_types(lista: list) -> str:
+    """Lista action_types com valor > 0 para auditoria no Sheets."""
+    tipos = []
+    for item in lista or []:
+        try:
+            valor = float(item.get("value", 0))
+        except (TypeError, ValueError):
+            valor = 0.0
+        action_type = item.get("action_type", "")
+        if action_type and valor:
+            tipos.append(action_type)
+    return ", ".join(sorted(set(tipos)))
 
 
 def buscar_paginas(since: str, until: str) -> list:
@@ -133,8 +205,13 @@ def main():
     for r in registros:
         actions = r.get("actions", [])
         action_values = r.get("action_values", [])
-        purchases = _extrair_action(actions, "purchase")
-        purchase_value = _extrair_action(action_values, "purchase")
+        conversions = {
+            name: _extrair_primeiro_grupo(actions, action_types)
+            for name, action_types in CONVERSION_GROUPS.items()
+        }
+        conversions_total = sum(conversions.values())
+        purchase_value = _extrair_primeiro_grupo(action_values, PURCHASE_VALUE_ACTION_TYPES)
+        conversion_action_types = _listar_action_types(actions)
 
         rows.append([
             r.get("campaign_id", ""),
@@ -146,8 +223,16 @@ def main():
             int(r.get("clicks", 0)),
             round(float(r.get("spend", 0)), 2),
             round(float(r.get("ctr", 0)), 4),
-            round(purchases, 2),
+            round(conversions["leads"], 2),
+            round(conversions["messaging_conversations"], 2),
+            round(conversions["contacts"], 2),
+            round(conversions["complete_registrations"], 2),
+            round(conversions["add_to_cart"], 2),
+            round(conversions["initiate_checkout"], 2),
+            round(conversions["purchases"], 2),
+            round(conversions_total, 2),
             round(purchase_value, 2),
+            conversion_action_types,
         ])
 
     # Upsert por date_start + campaign_id (evita duplicar campanhas no mesmo dia)
