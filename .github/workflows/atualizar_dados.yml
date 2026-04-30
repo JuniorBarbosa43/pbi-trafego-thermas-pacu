@@ -23,6 +23,16 @@ on:
           - google-ads
           - whatsapp
           - clima
+      meta_ads_historico:
+        description: "Rodar Meta Ads em modo historico?"
+        required: false
+        default: false
+        type: boolean
+      meta_ads_start_date:
+        description: "Data inicial do historico Meta Ads (YYYY-MM-DD)"
+        required: false
+        default: "2024-12-01"
+        type: string
 
 jobs:
 
@@ -50,7 +60,12 @@ jobs:
           GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
-        run: python scripts/atualizar_meta_ads_sheets.py
+        run: |
+          args=()
+          if [ "${{ github.event_name == 'workflow_dispatch' && inputs.meta_ads_historico }}" = "true" ]; then
+            args+=(--historico --start-date "${{ inputs.meta_ads_start_date }}")
+          fi
+          python scripts/atualizar_meta_ads_sheets.py "${args[@]}"
 
   # ---------------------------------------------------------
   meta-organico:
