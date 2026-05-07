@@ -34,9 +34,12 @@ def _only_digits(value: str) -> str:
 
 
 # Credenciais via GitHub Secrets
-GOOGLE_CLIENT_ID = _pick_env("GOOGLE_ADS_CLIENT_ID", "GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = _pick_env("GOOGLE_ADS_CLIENT_SECRET", "GOOGLE_CLIENT_SECRET")
-GOOGLE_REFRESH_TOKEN = _pick_env("GOOGLE_ADS_REFRESH_TOKEN", "GOOGLE_REFRESH_TOKEN")
+GOOGLE_ADS_CLIENT_ID = _pick_env("GOOGLE_ADS_CLIENT_ID")
+GOOGLE_ADS_CLIENT_SECRET = _pick_env("GOOGLE_ADS_CLIENT_SECRET")
+GOOGLE_ADS_REFRESH_TOKEN = _pick_env("GOOGLE_ADS_REFRESH_TOKEN")
+GOOGLE_SHEETS_CLIENT_ID = _pick_env("GOOGLE_CLIENT_ID")
+GOOGLE_SHEETS_CLIENT_SECRET = _pick_env("GOOGLE_CLIENT_SECRET")
+GOOGLE_SHEETS_REFRESH_TOKEN = _pick_env("GOOGLE_REFRESH_TOKEN")
 GOOGLE_DEVELOPER_TOKEN = _pick_env("GOOGLE_ADS_DEVELOPER_TOKEN", "GOOGLE_DEVELOPER_TOKEN")
 GOOGLE_CUSTOMER_ID = _only_digits(_pick_env("GOOGLE_ADS_CUSTOMER_ID", "GOOGLE_CUSTOMER_ID"))
 GOOGLE_MCC_ID = _only_digits(_pick_env("GOOGLE_ADS_LOGIN_CUSTOMER_ID", "GOOGLE_MCC_ID"))
@@ -86,12 +89,18 @@ class GoogleAdsHttpError(RuntimeError):
 
 def validar_config() -> None:
     missing = []
-    if not GOOGLE_CLIENT_ID:
-        missing.append("GOOGLE_CLIENT_ID/GOOGLE_ADS_CLIENT_ID")
-    if not GOOGLE_CLIENT_SECRET:
-        missing.append("GOOGLE_CLIENT_SECRET/GOOGLE_ADS_CLIENT_SECRET")
-    if not GOOGLE_REFRESH_TOKEN:
-        missing.append("GOOGLE_REFRESH_TOKEN/GOOGLE_ADS_REFRESH_TOKEN")
+    if not GOOGLE_ADS_CLIENT_ID:
+        missing.append("GOOGLE_ADS_CLIENT_ID")
+    if not GOOGLE_ADS_CLIENT_SECRET:
+        missing.append("GOOGLE_ADS_CLIENT_SECRET")
+    if not GOOGLE_ADS_REFRESH_TOKEN:
+        missing.append("GOOGLE_ADS_REFRESH_TOKEN")
+    if not GOOGLE_SHEETS_CLIENT_ID:
+        missing.append("GOOGLE_CLIENT_ID")
+    if not GOOGLE_SHEETS_CLIENT_SECRET:
+        missing.append("GOOGLE_CLIENT_SECRET")
+    if not GOOGLE_SHEETS_REFRESH_TOKEN:
+        missing.append("GOOGLE_REFRESH_TOKEN")
     if not GOOGLE_DEVELOPER_TOKEN:
         missing.append("GOOGLE_ADS_DEVELOPER_TOKEN")
     if not GOOGLE_CUSTOMER_ID:
@@ -125,9 +134,9 @@ def versoes_tentativa() -> List[str]:
 def obter_google_ads_token() -> str:
     """Troca refresh token por access token com escopo Google Ads."""
     return obter_access_token(
-        GOOGLE_CLIENT_ID,
-        GOOGLE_CLIENT_SECRET,
-        GOOGLE_REFRESH_TOKEN,
+        GOOGLE_ADS_CLIENT_ID,
+        GOOGLE_ADS_CLIENT_SECRET,
+        GOOGLE_ADS_REFRESH_TOKEN,
         service_name="Google Ads",
     )
 
@@ -306,9 +315,9 @@ def main() -> None:
 
     token_ads = obter_google_ads_token()
     token_sheets = obter_access_token(
-        GOOGLE_CLIENT_ID,
-        GOOGLE_CLIENT_SECRET,
-        GOOGLE_REFRESH_TOKEN,
+        GOOGLE_SHEETS_CLIENT_ID,
+        GOOGLE_SHEETS_CLIENT_SECRET,
+        GOOGLE_SHEETS_REFRESH_TOKEN,
     )
 
     criar_sheet_se_nao_existe(SPREADSHEET_ID, SHEET_NAME, token_sheets)
