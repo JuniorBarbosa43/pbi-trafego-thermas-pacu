@@ -107,7 +107,7 @@ jobs:
           if [ "${{ github.event_name == 'workflow_dispatch' && inputs.meta_organico_historico }}" = "true" ]; then
             args+=(--historico --start-date "${{ inputs.meta_organico_start_date }}")
           fi
-          python scripts/atualizar_meta_organico_sheets.py "${args[@]}"
+          python -u scripts/atualizar_meta_organico_sheets.py "${args[@]}"
 
   # ---------------------------------------------------------
   google-ads:
