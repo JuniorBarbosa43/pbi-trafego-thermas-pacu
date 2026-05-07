@@ -358,8 +358,6 @@ def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = 
         "created_time",
         "message",
         "permalink_url",
-        "type",
-        "status_type",
         "shares",
         "comments.summary(true).limit(0)",
         "reactions.summary(total_count).limit(0)",
@@ -378,8 +376,6 @@ def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = 
             rows.append([
                 post.get("id", ""),
                 post.get("created_time", "")[:10],
-                post.get("type", ""),
-                post.get("status_type", ""),
                 post.get("message", ""),
                 post.get("permalink_url", ""),
                 int((post.get("shares") or {}).get("count", 0) or 0),
@@ -401,7 +397,7 @@ def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = 
 
     print(f"  FB Posts coletados: {len(rows)}")
     headers = [
-        "id", "data", "tipo", "status_type", "message", "permalink_url",
+        "id", "data", "message", "permalink_url",
         "shares", "comentarios", "reacoes"
     ]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "FB_Posts", token_g)
