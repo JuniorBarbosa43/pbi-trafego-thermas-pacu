@@ -33,6 +33,16 @@ on:
         required: false
         default: "2024-12-01"
         type: string
+      meta_organico_historico:
+        description: "Rodar Meta Organico em modo historico?"
+        required: false
+        default: false
+        type: boolean
+      meta_organico_start_date:
+        description: "Data inicial do historico Meta Organico (YYYY-MM-DD)"
+        required: false
+        default: "2024-01-01"
+        type: string
 
 jobs:
 
@@ -92,7 +102,12 @@ jobs:
           GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
-        run: python scripts/atualizar_meta_organico_sheets.py
+        run: |
+          args=()
+          if [ "${{ github.event_name == 'workflow_dispatch' && inputs.meta_organico_historico }}" = "true" ]; then
+            args+=(--historico --start-date "${{ inputs.meta_organico_start_date }}")
+          fi
+          python scripts/atualizar_meta_organico_sheets.py "${args[@]}"
 
   # ---------------------------------------------------------
   google-ads:

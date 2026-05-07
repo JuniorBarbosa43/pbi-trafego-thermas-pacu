@@ -26,6 +26,9 @@ GOOGLE_REFRESH_TOKEN = os.environ["GOOGLE_REFRESH_TOKEN"]
 SPREADSHEET_ID       = os.environ["SPREADSHEET_ID"]
 
 JANELA_DIAS = 90
+DEFAULT_HISTORICO_START_DATE = "2024-01-01"
+MAX_POST_PAGES = 50
+REQUEST_SLEEP = 0.2
 
 
 def obter_page_token() -> str:
@@ -52,7 +55,40 @@ def graph_get(path: str, params: dict) -> dict:
         return {}
 
 
-def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
+def parse_date(value: str) -> date:
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(f"Data invalida: {value}. Use YYYY-MM-DD.") from exc
+
+
+def normalizar_valor(value):
+    if isinstance(value, dict):
+        return sum(v for v in value.values() if isinstance(v, (int, float)))
+    return value or 0
+
+
+def rows_from_insights(data: dict) -> list:
+    rows = []
+    for item in data.get("data", []):
+        metrica = item.get("name", "")
+        for val in item.get("values", []):
+            rows.append([val.get("end_time", "")[:10], metrica, normalizar_valor(val.get("value", 0))])
+    return rows
+
+
+def extrair_summary_count(obj: dict, key: str) -> int:
+    node = obj.get(key, {})
+    if not isinstance(node, dict):
+        return 0
+    summary = node.get("summary", {})
+    if not isinstance(summary, dict):
+        return 0
+    return int(summary.get("total_count", 0) or 0)
+
+
+def atualizar_fb(token_g: str, page_token: str, historico: bool = False, start_date: date = None):
+    start_date = start_date or parse_date(DEFAULT_HISTORICO_START_DATE)
     # Metricas principais (comprovadas na API v25)
     metricas_core = [
         "page_video_views",
@@ -69,8 +105,8 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
     metricas = metricas_core
 
     if historico:
-        print("FB: Modo HISTORICO desde 2025-01-01 em chunks de 90 dias")
-        inicio = date(2025, 1, 1)
+        print(f"FB: Modo HISTORICO desde {start_date.isoformat()} em chunks de 90 dias")
+        inicio = start_date
         fim = date.today()
         chunk_dias = 90
         todos_rows = []
@@ -90,16 +126,10 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
                 "access_token": page_token,
             })
 
-            for item in data.get("data", []):
-                metrica = item.get("name", "")
-                for val in item.get("values", []):
-                    v = val.get("value", 0)
-                    if isinstance(v, dict):
-                        v = sum(v.values())
-                    todos_rows.append([val.get("end_time", "")[:10], metrica, v])
+            todos_rows.extend(rows_from_insights(data))
 
             current = chunk_end + timedelta(days=1)
-            time.sleep(0.2)
+            time.sleep(REQUEST_SLEEP)
 
         rows = todos_rows
     else:
@@ -113,17 +143,11 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
             "access_token": page_token,
         })
         rows = []
-        for item in data.get("data", []):
-            metrica = item.get("name", "")
-            for val in item.get("values", []):
-                v = val.get("value", 0)
-                if isinstance(v, dict):
-                    v = sum(v.values())
-                rows.append([val.get("end_time", "")[:10], metrica, v])
+        rows = rows_from_insights(data)
 
     # Metricas extras em chunks de 90 dias (limite da API Facebook)
     if historico:
-        extra_inicio = date(2025, 1, 1)
+        extra_inicio = start_date
     else:
         extra_inicio = date.today() - timedelta(days=JANELA_DIAS)
     extra_fim = date.today()
@@ -142,27 +166,30 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False):
                 "access_token": page_token,
             })
             if extra_data.get("data"):
-                for item in extra_data["data"]:
-                    metrica = item.get("name", "")
-                    for val in item.get("values", []):
-                        v = val.get("value", 0)
-                        if isinstance(v, dict):
-                            v = sum(v.values())
-                        rows.append([val.get("end_time", "")[:10], metrica, v])
+                rows.extend(rows_from_insights(extra_data))
                 print(f"    chunk {extra_current} -> {extra_chunk_end}: {len(extra_data['data'])} series")
             else:
                 print(f"    chunk {extra_current} -> {extra_chunk_end}: SEM DADOS")
             extra_current = extra_chunk_end + timedelta(days=1)
-            time.sleep(0.2)
+            time.sleep(REQUEST_SLEEP)
 
     headers = ["data", "metrica", "valor"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "Meta_Organico_FB", token_g)
     upsert_por_data(SPREADSHEET_ID, "Meta_Organico_FB", headers, rows, token_g, key_cols=["data", "metrica"])
 
 
-def atualizar_ig(token_g: str, page_token: str, historico: bool = False):
+def atualizar_ig(token_g: str, page_token: str, historico: bool = False, start_date: date = None):
+    start_date = start_date or parse_date(DEFAULT_HISTORICO_START_DATE)
     metricas_day = ["reach"]
-    metricas_total_value = ["website_clicks", "profile_views", "accounts_engaged"]
+    metricas_total_value = [
+        "accounts_engaged",
+        "total_interactions",
+        "views",
+        "profile_links_taps",
+        # Mantidas para compatibilidade com contas/versoes que ainda retornam.
+        "website_clicks",
+        "profile_views",
+    ]
     ig_token = page_token or META_TOKEN
 
     def _buscar_chunk_ig(since, until):
@@ -199,8 +226,8 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False):
         return chunk_rows
 
     if historico:
-        print("IG: Modo HISTORICO desde 2025-01-01 em chunks de 28 dias")
-        inicio = date(2025, 1, 1)
+        print(f"IG: Modo HISTORICO desde {start_date.isoformat()} em chunks de 28 dias")
+        inicio = start_date
         fim = date.today()
         chunk_dias = 28
         todos_rows = []
@@ -212,7 +239,7 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False):
             print(f"  Periodo: {since} -> {until}")
             todos_rows.extend(_buscar_chunk_ig(since, until))
             current = chunk_end + timedelta(days=1)
-            time.sleep(0.2)
+            time.sleep(REQUEST_SLEEP)
         rows = todos_rows
     else:
         janela_ig = min(JANELA_DIAS, 28)
@@ -237,61 +264,164 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False):
     upsert_por_data(SPREADSHEET_ID, "Meta_Organico_IG", headers, rows, token_g, key_cols=["data", "metrica"])
 
 
-def atualizar_posts(token_g, page_token, historico=False):
+def obter_ig_media_insights(media_id: str, ig_token: str) -> dict:
+    metricas = ["reach", "saved", "views", "total_interactions", "shares"]
+    data = graph_get(f"{media_id}/insights", {
+        "metric":       ",".join(metricas),
+        "access_token": ig_token,
+    })
+    insights = {}
+    for item in data.get("data", []):
+        nome = item.get("name", "")
+        valores = item.get("values", [])
+        if valores:
+            insights[nome] = normalizar_valor(valores[0].get("value", 0))
+    return insights
+
+
+def atualizar_posts(token_g, page_token, historico=False, start_date: date = None):
+    start_date = start_date or parse_date(DEFAULT_HISTORICO_START_DATE)
     ig_token = page_token or META_TOKEN
     all_posts = []
+    stop_pagination = False
     data = graph_get(f"{META_IG_ID}/media", {
-        "fields":       "id,timestamp,media_type,like_count,comments_count,reach,impressions,saved",
+        "fields":       "id,timestamp,caption,permalink,media_url,thumbnail_url,media_type,media_product_type,like_count,comments_count",
         "limit":        "100",
         "access_token": ig_token,
     })
-    all_posts.extend(data.get("data", []))
+    for post in data.get("data", []):
+        post_date = parse_date(post.get("timestamp", "")[:10]) if post.get("timestamp") else date.today()
+        if historico and post_date < start_date:
+            stop_pagination = True
+            continue
+        all_posts.append(post)
     if historico:
         next_url = data.get("paging", {}).get("next")
         page_num = 1
-        while next_url and page_num < 20:
+        while next_url and page_num < MAX_POST_PAGES and not stop_pagination:
             print(f"  IG Posts paginacao {page_num + 1}...")
             try:
                 with urllib.request.urlopen(next_url) as resp:
                     data = json.loads(resp.read())
-                all_posts.extend(data.get("data", []))
+                for post in data.get("data", []):
+                    post_date = parse_date(post.get("timestamp", "")[:10]) if post.get("timestamp") else date.today()
+                    if post_date < start_date:
+                        stop_pagination = True
+                        continue
+                    all_posts.append(post)
                 next_url = data.get("paging", {}).get("next")
                 page_num += 1
-                time.sleep(0.2)
+                time.sleep(REQUEST_SLEEP)
             except Exception as e:
                 print(f"  AVISO paginacao: {e}")
                 break
     rows = []
     for post in all_posts:
+        insights = obter_ig_media_insights(post.get("id", ""), ig_token)
+        time.sleep(REQUEST_SLEEP)
         rows.append([
             post.get("id", ""),
             post.get("timestamp", "")[:10],
             post.get("media_type", ""),
+            post.get("media_product_type", ""),
+            post.get("caption", ""),
+            post.get("permalink", ""),
+            post.get("media_url", ""),
+            post.get("thumbnail_url", ""),
             post.get("like_count", 0),
             post.get("comments_count", 0),
-            post.get("reach", 0),
-            post.get("impressions", 0),
-            post.get("saved", 0),
+            insights.get("reach", 0),
+            insights.get("impressions", 0),
+            insights.get("saved", 0),
+            insights.get("views", 0),
+            insights.get("shares", 0),
+            insights.get("total_interactions", 0),
         ])
     print(f"  IG Posts coletados: {len(rows)}")
-    headers = ["id", "data", "tipo", "likes", "comentarios", "reach", "impressions", "saved"]
+    headers = [
+        "id", "data", "tipo", "produto", "caption", "permalink", "media_url", "thumbnail_url",
+        "likes", "comentarios", "reach", "impressions", "saved", "views", "shares", "total_interactions"
+    ]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "IG_Posts", token_g)
     upsert_por_data(SPREADSHEET_ID, "IG_Posts", headers, rows, token_g, key_cols=["id"])
 
 
+def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = None):
+    start_date = start_date or parse_date(DEFAULT_HISTORICO_START_DATE)
+    since = start_date.isoformat() if historico else (date.today() - timedelta(days=JANELA_DIAS)).isoformat()
+    until = date.today().isoformat()
+    fields = ",".join([
+        "id",
+        "created_time",
+        "message",
+        "permalink_url",
+        "type",
+        "status_type",
+        "shares",
+        "comments.summary(true).limit(0)",
+        "reactions.summary(total_count).limit(0)",
+    ])
+    rows = []
+    data = graph_get(f"{META_PAGE_ID}/posts", {
+        "fields":       fields,
+        "limit":        "100",
+        "since":        since,
+        "until":        until,
+        "access_token": page_token,
+    })
+    page_num = 1
+    while True:
+        for post in data.get("data", []):
+            rows.append([
+                post.get("id", ""),
+                post.get("created_time", "")[:10],
+                post.get("type", ""),
+                post.get("status_type", ""),
+                post.get("message", ""),
+                post.get("permalink_url", ""),
+                int((post.get("shares") or {}).get("count", 0) or 0),
+                extrair_summary_count(post, "comments"),
+                extrair_summary_count(post, "reactions"),
+            ])
+        next_url = data.get("paging", {}).get("next")
+        if not historico or not next_url or page_num >= MAX_POST_PAGES:
+            break
+        print(f"  FB Posts paginacao {page_num + 1}...")
+        try:
+            with urllib.request.urlopen(next_url) as resp:
+                data = json.loads(resp.read())
+            page_num += 1
+            time.sleep(REQUEST_SLEEP)
+        except Exception as e:
+            print(f"  AVISO FB posts paginacao: {e}")
+            break
+
+    print(f"  FB Posts coletados: {len(rows)}")
+    headers = [
+        "id", "data", "tipo", "status_type", "message", "permalink_url",
+        "shares", "comentarios", "reacoes"
+    ]
+    criar_sheet_se_nao_existe(SPREADSHEET_ID, "FB_Posts", token_g)
+    upsert_por_data(SPREADSHEET_ID, "FB_Posts", headers, rows, token_g, key_cols=["id"])
+
+
 def main():
     parser = argparse.ArgumentParser(description="Atualiza Meta Organico no Google Sheets")
-    parser.add_argument("--historico", action="store_true", help="Fetch dados historicos desde 2025-01-01")
+    parser.add_argument("--historico", action="store_true", help="Fetch dados historicos desde a data inicial")
+    parser.add_argument("--start-date", default=DEFAULT_HISTORICO_START_DATE, help="Data inicial do historico (YYYY-MM-DD)")
     args = parser.parse_args()
+    start_date = parse_date(args.start_date)
     print("=== Meta Organico -> Google Sheets ===")
     page_token = obter_page_token()
     token_g = obter_access_token(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN)
     print("FB Insights...")
-    atualizar_fb(token_g, page_token, historico=args.historico)
+    atualizar_fb(token_g, page_token, historico=args.historico, start_date=start_date)
+    print("FB Posts...")
+    atualizar_fb_posts(token_g, page_token, historico=args.historico, start_date=start_date)
     print("IG Insights...")
-    atualizar_ig(token_g, page_token, historico=args.historico)
+    atualizar_ig(token_g, page_token, historico=args.historico, start_date=start_date)
     print("IG Posts...")
-    atualizar_posts(token_g, page_token, historico=args.historico)
+    atualizar_posts(token_g, page_token, historico=args.historico, start_date=start_date)
     print("Concluido.")
 
 
