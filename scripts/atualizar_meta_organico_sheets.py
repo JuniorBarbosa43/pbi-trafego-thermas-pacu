@@ -15,7 +15,7 @@ from datetime import date, timedelta
 import time
 
 sys.path.insert(0, os.path.dirname(__file__))
-from sheets_helper import obter_access_token, upsert_por_data, criar_sheet_se_nao_existe
+from sheets_helper import limpar_e_gravar, obter_access_token, upsert_por_data, criar_sheet_se_nao_existe
 
 META_TOKEN           = os.environ["META_TOKEN"]
 META_PAGE_ID         = os.environ["META_PAGE_ID"]
@@ -86,6 +86,13 @@ def extrair_summary_count(obj: dict, key: str) -> int:
     if not isinstance(summary, dict):
         return 0
     return int(summary.get("total_count", 0) or 0)
+
+
+def gravar_dados(sheet_name: str, headers: list, rows: list, token_g: str, key_cols: list, historico: bool):
+    if historico:
+        limpar_e_gravar(SPREADSHEET_ID, sheet_name, headers, rows, token_g)
+        return
+    upsert_por_data(SPREADSHEET_ID, sheet_name, headers, rows, token_g, key_cols=key_cols)
 
 
 def atualizar_fb(token_g: str, page_token: str, historico: bool = False, start_date: date = None):
@@ -176,7 +183,7 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False, start_d
 
     headers = ["data", "metrica", "valor"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "Meta_Organico_FB", token_g)
-    upsert_por_data(SPREADSHEET_ID, "Meta_Organico_FB", headers, rows, token_g, key_cols=["data", "metrica"])
+    gravar_dados("Meta_Organico_FB", headers, rows, token_g, key_cols=["data", "metrica"], historico=historico)
 
 
 def atualizar_ig(token_g: str, page_token: str, historico: bool = False, start_date: date = None):
@@ -262,7 +269,7 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False, start_d
     print(f"  IG total linhas coletadas: {len(rows)}")
     headers = ["data", "metrica", "valor"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "Meta_Organico_IG", token_g)
-    upsert_por_data(SPREADSHEET_ID, "Meta_Organico_IG", headers, rows, token_g, key_cols=["data", "metrica"])
+    gravar_dados("Meta_Organico_IG", headers, rows, token_g, key_cols=["data", "metrica"], historico=historico)
 
 
 def obter_ig_media_insights(media_id: str, ig_token: str) -> dict:
@@ -346,7 +353,7 @@ def atualizar_posts(token_g, page_token, historico=False, start_date: date = Non
         "likes", "comentarios", "reach", "impressions", "saved", "views", "shares", "total_interactions"
     ]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "IG_Posts", token_g)
-    upsert_por_data(SPREADSHEET_ID, "IG_Posts", headers, rows, token_g, key_cols=["id"])
+    gravar_dados("IG_Posts", headers, rows, token_g, key_cols=["id"], historico=historico)
 
 
 def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = None):
@@ -401,7 +408,7 @@ def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = 
         "shares", "comentarios", "reacoes"
     ]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "FB_Posts", token_g)
-    upsert_por_data(SPREADSHEET_ID, "FB_Posts", headers, rows, token_g, key_cols=["id"])
+    gravar_dados("FB_Posts", headers, rows, token_g, key_cols=["id"], historico=historico)
 
 
 def main():
