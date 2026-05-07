@@ -29,11 +29,12 @@ JANELA_DIAS = 90
 DEFAULT_HISTORICO_START_DATE = "2024-01-01"
 MAX_POST_PAGES = 50
 REQUEST_SLEEP = 0.2
+API_TIMEOUT = 60
 
 
 def obter_page_token() -> str:
     url = f"https://graph.facebook.com/v25.0/me/accounts?access_token={META_TOKEN}"
-    with urllib.request.urlopen(url) as resp:
+    with urllib.request.urlopen(url, timeout=API_TIMEOUT) as resp:
         data = json.loads(resp.read())
     for page in data.get("data", []):
         if page.get("id") == META_PAGE_ID:
@@ -44,7 +45,7 @@ def obter_page_token() -> str:
 def graph_get(path: str, params: dict) -> dict:
     url = f"https://graph.facebook.com/v25.0/{path}?" + urllib.parse.urlencode(params)
     try:
-        with urllib.request.urlopen(url) as resp:
+        with urllib.request.urlopen(url, timeout=API_TIMEOUT) as resp:
             return json.loads(resp.read())
     except urllib.error.HTTPError as e:
         erro = e.read().decode("utf-8")
@@ -301,7 +302,7 @@ def atualizar_posts(token_g, page_token, historico=False, start_date: date = Non
         while next_url and page_num < MAX_POST_PAGES and not stop_pagination:
             print(f"  IG Posts paginacao {page_num + 1}...")
             try:
-                with urllib.request.urlopen(next_url) as resp:
+                with urllib.request.urlopen(next_url, timeout=API_TIMEOUT) as resp:
                     data = json.loads(resp.read())
                 for post in data.get("data", []):
                     post_date = parse_date(post.get("timestamp", "")[:10]) if post.get("timestamp") else date.today()
@@ -316,7 +317,9 @@ def atualizar_posts(token_g, page_token, historico=False, start_date: date = Non
                 print(f"  AVISO paginacao: {e}")
                 break
     rows = []
-    for post in all_posts:
+    for index, post in enumerate(all_posts, start=1):
+        if index == 1 or index % 25 == 0:
+            print(f"  IG Posts insights: {index}/{len(all_posts)}")
         insights = obter_ig_media_insights(post.get("id", ""), ig_token)
         time.sleep(REQUEST_SLEEP)
         rows.append([
@@ -388,7 +391,7 @@ def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = 
             break
         print(f"  FB Posts paginacao {page_num + 1}...")
         try:
-            with urllib.request.urlopen(next_url) as resp:
+            with urllib.request.urlopen(next_url, timeout=API_TIMEOUT) as resp:
                 data = json.loads(resp.read())
             page_num += 1
             time.sleep(REQUEST_SLEEP)
