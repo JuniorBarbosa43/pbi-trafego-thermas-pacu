@@ -115,6 +115,7 @@ def obter_ghl_token():
 
 print("Obtendo GHL token via Firebase...")
 GHL_TOKEN, FIREBASE_ID_TOKEN = obter_ghl_token()
+GHL_TOKEN_OBTAINED_AT = time.time()
 
 GOOGLE_CLIENT_ID     = normalizar_secret(os.environ["GOOGLE_CLIENT_ID"])
 GOOGLE_CLIENT_SECRET = normalizar_secret(os.environ["GOOGLE_CLIENT_SECRET"])
@@ -122,6 +123,16 @@ GOOGLE_REFRESH_TOKEN = normalizar_secret(os.environ["GOOGLE_REFRESH_TOKEN"])
 SPREADSHEET_ID       = normalizar_secret(os.environ["SPREADSHEET_ID"])
 
 BASE_URL = "https://backend.leadconnectorhq.com"
+GHL_TOKEN_TTL = 45 * 60  # renova GHL token a cada 45 min (TTL real ~60 min)
+
+
+def renovar_ghl_se_necessario():
+    global GHL_TOKEN, FIREBASE_ID_TOKEN, GHL_TOKEN_OBTAINED_AT
+    if time.time() - GHL_TOKEN_OBTAINED_AT >= GHL_TOKEN_TTL:
+        print("  [token] GHL token proximo de expirar — renovando...")
+        GHL_TOKEN, FIREBASE_ID_TOKEN = obter_ghl_token()
+        GHL_TOKEN_OBTAINED_AT = time.time()
+        print("  [token] GHL token renovado com sucesso")
 
 
 def infer_departamento(name: str) -> str:
@@ -318,6 +329,7 @@ def main():
         print(f"  Total de semanas: {len(weeks)}")
 
         for tpl in templates_flat:
+            renovar_ghl_se_necessario()
             print(f"  Template [{tpl['templateName']}] id={tpl['templateId']}")
             for ws, we in weeks:
                 processar_chunk(tpl, ws, we, analytics_flat)
@@ -339,6 +351,10 @@ def main():
                 time.sleep(0.2)
 
     print(f"  Total registros analytics: {len(analytics_flat)}")
+
+    # Renova Google token antes de escrever — runs longas expiram o token (~1h TTL)
+    print("Renovando Google token antes de gravar...")
+    token = obter_access_token(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN)
 
     wa_headers = [
         "templateId", "templateName", "category", "language", "status",
