@@ -314,7 +314,7 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False, start_d
 def obter_ig_media_insights(media_id: str, ig_token: str) -> dict:
     global IG_MEDIA_EXTRA_METRICS_ATIVAS
     metricas_base = ["reach", "saved", "views", "total_interactions", "shares"]
-    metricas_extra = ["impressions", "follows", "profile_activity", "profile_visits", "website_clicks"]
+    metricas_extra = ["impressions", "follows", "profile_activity", "profile_visits"]
 
     insights = {}
     data = graph_get(f"{media_id}/insights", {
@@ -422,7 +422,6 @@ def atualizar_posts(token_g, page_token, historico=False, start_date: date = Non
             inteiro(insights.get("follows", 0)),
             inteiro(insights.get("profile_activity", 0)),
             inteiro(insights.get("profile_visits", 0)),
-            inteiro(insights.get("website_clicks", 0)),
             engagement_total,
             taxa(engagement_total, reach),
         ])
@@ -431,7 +430,7 @@ def atualizar_posts(token_g, page_token, historico=False, start_date: date = Non
         "id", "data", "tipo", "produto", "caption", "permalink", "media_url", "thumbnail_url",
         "likes", "comentarios", "comentarios_habilitados", "reach", "impressions", "saved", "views",
         "shares", "total_interactions", "follows", "profile_activity", "profile_visits",
-        "website_clicks", "engagement_total", "engagement_rate_reach"
+        "engagement_total", "engagement_rate_reach"
     ]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "IG_Posts", token_g)
     gravar_dados("IG_Posts", headers, rows, token_g, key_cols=["id"], historico=historico)
