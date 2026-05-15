@@ -367,7 +367,6 @@ def obter_story_insights(media_id: str, token: str, metricas: list) -> dict:
 
 
 def atualizar_ig_stories(token_g, page_token):
-    global IG_STORY_METRICS_ATIVAS
     ig_token = page_token or META_TOKEN
     rows = []
     data = graph_get(f"{META_IG_ID}/stories", {
@@ -393,8 +392,7 @@ def atualizar_ig_stories(token_g, page_token):
         if IG_STORY_METRICS_ATIVAS:
             insights = obter_story_insights(story.get("id", ""), ig_token, metricas_story)
             if not insights:
-                IG_STORY_METRICS_ATIVAS = False
-                print("  AVISO: insights de IG Stories nao retornaram dados; seguindo so com metadados.")
+                print("  AVISO: insights deste IG Story nao retornaram dados; seguindo com metadados.")
         reach = inteiro(insights.get("reach", 0))
         replies = inteiro(insights.get("replies", 0))
         navigation_total = inteiro(insights.get("navigation_total", 0))
@@ -631,7 +629,6 @@ def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = 
 
 
 def obter_fb_story_insights(story_id: str, page_token: str) -> dict:
-    global FB_STORY_INSIGHTS_ATIVOS
     if not FB_STORY_INSIGHTS_ATIVOS:
         return {}
 
@@ -651,9 +648,7 @@ def obter_fb_story_insights(story_id: str, page_token: str) -> dict:
                 if valores:
                     insights[nome] = normalizar_valor(valores[0].get("value", 0))
         else:
-            FB_STORY_INSIGHTS_ATIVOS = False
-            print("  AVISO: insights de FB Stories nao retornaram dados; seguindo so com metadados.")
-            break
+            print("  AVISO: alguns insights deste FB Story nao retornaram dados; seguindo com metadados.")
     return insights
 
 
