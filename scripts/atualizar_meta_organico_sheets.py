@@ -356,7 +356,13 @@ def obter_story_insights(media_id: str, token: str, metricas: list) -> dict:
         nome = item.get("name", "")
         valores = item.get("values", [])
         if valores:
-            insights[nome] = normalizar_valor(valores[0].get("value", 0))
+            valor = valores[0].get("value", 0)
+            if nome == "navigation" and isinstance(valor, dict):
+                insights["navigation_total"] = normalizar_valor(valor)
+                for key, item_value in valor.items():
+                    insights[f"navigation_{key}"] = normalizar_valor(item_value)
+            else:
+                insights[nome] = normalizar_valor(valor)
     return insights
 
 
@@ -378,7 +384,7 @@ def atualizar_ig_stories(token_g, page_token):
 
     stories = data.get("data", [])
     print(f"  IG Stories ativos: {len(stories)}")
-    metricas_story = ["exits", "impressions", "reach", "replies", "taps_forward", "taps_back"]
+    metricas_story = ["impressions", "reach", "replies", "navigation"]
 
     for index, story in enumerate(stories, start=1):
         if index == 1 or index % 10 == 0:
@@ -392,9 +398,15 @@ def atualizar_ig_stories(token_g, page_token):
         reach = inteiro(insights.get("reach", 0))
         impressions = inteiro(insights.get("impressions", 0))
         replies = inteiro(insights.get("replies", 0))
-        taps_forward = inteiro(insights.get("taps_forward", 0))
-        taps_back = inteiro(insights.get("taps_back", 0))
-        exits = inteiro(insights.get("exits", 0))
+        navigation_total = inteiro(insights.get("navigation_total", 0))
+        taps_forward = inteiro(
+            insights.get("navigation_tap_forward", insights.get("navigation_taps_forward", 0))
+        )
+        taps_back = inteiro(
+            insights.get("navigation_tap_back", insights.get("navigation_taps_back", 0))
+        )
+        exits = inteiro(insights.get("navigation_exit", insights.get("navigation_exits", 0)))
+        swipe_forward = inteiro(insights.get("navigation_swipe_forward", 0))
         rows.append([
             story.get("id", ""),
             story.get("timestamp", "")[:10],
@@ -409,6 +421,8 @@ def atualizar_ig_stories(token_g, page_token):
             taps_forward,
             taps_back,
             exits,
+            swipe_forward,
+            navigation_total,
             taxa(replies, reach),
             taxa(exits, impressions),
         ])
@@ -417,7 +431,7 @@ def atualizar_ig_stories(token_g, page_token):
     headers = [
         "id", "data", "timestamp", "tipo", "media_url", "thumbnail_url", "permalink",
         "reach", "impressions", "replies", "taps_forward", "taps_back", "exits",
-        "reply_rate_reach", "exit_rate_impressions"
+        "swipe_forward", "navigation_total", "reply_rate_reach", "exit_rate_impressions"
     ]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "IG_Stories", token_g)
     upsert_por_data(SPREADSHEET_ID, "IG_Stories", headers, rows, token_g, key_cols=["id"])
