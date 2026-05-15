@@ -662,17 +662,20 @@ def buscar_fb_stories(page_token: str) -> list:
         "status_type",
     ])
     tentativas = [
-        ("page_id/stories", f"{META_PAGE_ID}/stories", full_fields),
-        ("page_id/stories_min", f"{META_PAGE_ID}/stories", "id,created_time"),
-        ("me/stories", "me/stories", full_fields),
-        ("me/stories_min", "me/stories", "id,created_time"),
+        ("page_token page_id/stories", f"{META_PAGE_ID}/stories", full_fields, page_token),
+        ("page_token page_id/stories_min", f"{META_PAGE_ID}/stories", "id,created_time", page_token),
+        ("page_token me/stories", "me/stories", full_fields, page_token),
+        ("page_token me/stories_min", "me/stories", "id,created_time", page_token),
+        ("user_token page_id/stories", f"{META_PAGE_ID}/stories", full_fields, META_TOKEN),
+        ("page_token page_id/published_stories", f"{META_PAGE_ID}/published_stories", full_fields, page_token),
+        ("user_token page_id/published_stories", f"{META_PAGE_ID}/published_stories", full_fields, META_TOKEN),
     ]
 
-    for label, path, fields in tentativas:
+    for label, path, fields, token in tentativas:
         data = graph_get(path, {
             "fields":       fields,
             "limit":        "100",
-            "access_token": page_token,
+            "access_token": token,
         })
         stories = data.get("data", [])
         print(f"  FB Stories tentativa {label}: {len(stories)} itens")
