@@ -652,8 +652,8 @@ def obter_fb_story_insights(story_id: str, page_token: str) -> dict:
     return insights
 
 
-def atualizar_fb_stories(token_g, page_token):
-    fields = ",".join([
+def buscar_fb_stories(page_token: str) -> list:
+    full_fields = ",".join([
         "id",
         "created_time",
         "message",
@@ -661,18 +661,28 @@ def atualizar_fb_stories(token_g, page_token):
         "full_picture",
         "status_type",
     ])
-    data = graph_get(f"{META_PAGE_ID}/stories", {
-        "fields":       fields,
-        "limit":        "100",
-        "access_token": page_token,
-    })
-    if not data.get("data"):
-        data = graph_get(f"{META_PAGE_ID}/stories", {
-            "fields":       "id,created_time",
+    tentativas = [
+        ("page_id/stories", f"{META_PAGE_ID}/stories", full_fields),
+        ("page_id/stories_min", f"{META_PAGE_ID}/stories", "id,created_time"),
+        ("me/stories", "me/stories", full_fields),
+        ("me/stories_min", "me/stories", "id,created_time"),
+    ]
+
+    for label, path, fields in tentativas:
+        data = graph_get(path, {
+            "fields":       fields,
             "limit":        "100",
             "access_token": page_token,
         })
-    stories = data.get("data", [])
+        stories = data.get("data", [])
+        print(f"  FB Stories tentativa {label}: {len(stories)} itens")
+        if stories:
+            return stories
+    return []
+
+
+def atualizar_fb_stories(token_g, page_token):
+    stories = buscar_fb_stories(page_token)
     print(f"  FB Stories ativos: {len(stories)}")
 
     rows = []
