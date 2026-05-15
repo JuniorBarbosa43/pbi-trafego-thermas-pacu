@@ -384,7 +384,7 @@ def atualizar_ig_stories(token_g, page_token):
 
     stories = data.get("data", [])
     print(f"  IG Stories ativos: {len(stories)}")
-    metricas_story = ["impressions", "reach", "replies", "navigation"]
+    metricas_story = ["reach", "replies", "navigation"]
 
     for index, story in enumerate(stories, start=1):
         if index == 1 or index % 10 == 0:
@@ -396,7 +396,6 @@ def atualizar_ig_stories(token_g, page_token):
                 IG_STORY_METRICS_ATIVAS = False
                 print("  AVISO: insights de IG Stories nao retornaram dados; seguindo so com metadados.")
         reach = inteiro(insights.get("reach", 0))
-        impressions = inteiro(insights.get("impressions", 0))
         replies = inteiro(insights.get("replies", 0))
         navigation_total = inteiro(insights.get("navigation_total", 0))
         taps_forward = inteiro(
@@ -416,7 +415,6 @@ def atualizar_ig_stories(token_g, page_token):
             story.get("thumbnail_url", ""),
             story.get("permalink", ""),
             reach,
-            impressions,
             replies,
             taps_forward,
             taps_back,
@@ -424,14 +422,14 @@ def atualizar_ig_stories(token_g, page_token):
             swipe_forward,
             navigation_total,
             taxa(replies, reach),
-            taxa(exits, impressions),
+            taxa(exits, reach),
         ])
         time.sleep(REQUEST_SLEEP)
 
     headers = [
         "id", "data", "timestamp", "tipo", "media_url", "thumbnail_url", "permalink",
-        "reach", "impressions", "replies", "taps_forward", "taps_back", "exits",
-        "swipe_forward", "navigation_total", "reply_rate_reach", "exit_rate_impressions"
+        "reach", "replies", "taps_forward", "taps_back", "exits",
+        "swipe_forward", "navigation_total", "reply_rate_reach", "exit_rate_reach"
     ]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "IG_Stories", token_g)
     upsert_por_data(SPREADSHEET_ID, "IG_Stories", headers, rows, token_g, key_cols=["id"])
