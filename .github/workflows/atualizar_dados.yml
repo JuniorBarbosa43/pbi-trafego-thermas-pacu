@@ -7,7 +7,6 @@ on:
     - cron: '0 9 * * *'   # Meta Ads
     - cron: '10 9 * * *'  # Meta Organico
     - cron: '20 9 * * *'  # Google Ads
-    - cron: '30 9 * * *'  # WhatsApp GHL
     - cron: '40 9 * * *'  # ClimaTempo
   workflow_dispatch:       # Permite execucao manual
     inputs:
@@ -21,7 +20,6 @@ on:
           - meta-ads
           - meta-organico
           - google-ads
-          - whatsapp
           - clima
       meta_ads_historico:
         description: "Rodar Meta Ads em modo historico?"
@@ -138,34 +136,6 @@ jobs:
           GOOGLE_REFRESH_TOKEN:        ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           SPREADSHEET_ID:              ${{ secrets.SPREADSHEET_ID }}
         run: python scripts/atualizar_google_ads_sheets.py
-
-  # ---------------------------------------------------------
-  whatsapp:
-    name: WhatsApp GHL -> Sheets
-    runs-on: ubuntu-latest
-    if: >
-      (github.event_name == 'workflow_dispatch' && (inputs.fonte == 'all' || inputs.fonte == 'whatsapp')) ||
-      (github.event_name == 'schedule' && github.event.schedule == '30 9 * * *')
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Executar script
-        env:
-          GHL_FIREBASE_REFRESH_TOKEN: ${{ secrets.GHL_FIREBASE_REFRESH_TOKEN }}
-          GHL_FIREBASE_API_KEY:       ${{ secrets.GHL_FIREBASE_API_KEY }}
-          GHL_LOCATION:               ${{ secrets.GHL_LOCATION }}
-          GHL_WABA_ID:                ${{ secrets.GHL_WABA_ID }}
-          GOOGLE_CLIENT_ID:           ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET:       ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          GOOGLE_REFRESH_TOKEN:       ${{ secrets.GOOGLE_REFRESH_TOKEN }}
-          SPREADSHEET_ID:             ${{ secrets.SPREADSHEET_ID }}
-        run: python scripts/atualizar_whatsapp_sheets.py
 
   # ---------------------------------------------------------
   clima:

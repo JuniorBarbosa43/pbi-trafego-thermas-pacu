@@ -100,27 +100,3 @@ jobs:
           SPREADSHEET_ID:              ${{ secrets.SPREADSHEET_ID }}
         run: python scripts/atualizar_google_ads_sheets.py --historico
 
-  # ---------------------------------------------------------
-  whatsapp-historico:
-    name: WhatsApp Historico
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Carga historica WhatsApp
-        env:
-          GHL_FIREBASE_REFRESH_TOKEN: ${{ secrets.GHL_FIREBASE_REFRESH_TOKEN }}
-          GHL_FIREBASE_API_KEY:       ${{ secrets.GHL_FIREBASE_API_KEY }}
-          GHL_LOCATION:               ${{ secrets.GHL_LOCATION }}
-          GHL_WABA_ID:                ${{ secrets.GHL_WABA_ID }}
-          GOOGLE_CLIENT_ID:           ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET:       ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          GOOGLE_REFRESH_TOKEN:       ${{ secrets.GOOGLE_REFRESH_TOKEN }}
-          SPREADSHEET_ID:             ${{ secrets.SPREADSHEET_ID }}
-        run: python scripts/atualizar_whatsapp_sheets.py --historico
