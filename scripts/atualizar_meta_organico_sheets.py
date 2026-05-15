@@ -30,6 +30,7 @@ DEFAULT_HISTORICO_START_DATE = "2024-01-01"
 MAX_POST_PAGES = 50
 REQUEST_SLEEP = 0.2
 API_TIMEOUT = 60
+IG_MEDIA_EXTRA_METRICS_ATIVAS = True
 
 
 def obter_page_token() -> str:
@@ -86,6 +87,32 @@ def extrair_summary_count(obj: dict, key: str) -> int:
     if not isinstance(summary, dict):
         return 0
     return int(summary.get("total_count", 0) or 0)
+
+
+def inteiro(value) -> int:
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def taxa(numerador: int, denominador: int) -> float:
+    if not denominador:
+        return 0
+    return round(numerador / denominador, 6)
+
+
+def buscar_campos_numericos(path: str, fields: list, token: str) -> dict:
+    valores = {}
+    for field in fields:
+        data = graph_get(path, {
+            "fields":       field,
+            "access_token": token,
+        })
+        if field in data:
+            valores[field] = inteiro(data.get(field))
+        time.sleep(REQUEST_SLEEP)
+    return valores
 
 
 def gravar_dados(sheet_name: str, headers: list, rows: list, token_g: str, key_cols: list, historico: bool):
@@ -181,6 +208,19 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False, start_d
             extra_current = extra_chunk_end + timedelta(days=1)
             time.sleep(REQUEST_SLEEP)
 
+    print("  FB campos atuais da pagina...")
+    page_fields = buscar_campos_numericos(META_PAGE_ID, [
+        "followers_count",
+        "fan_count",
+        "talking_about_count",
+        "were_here_count",
+        "checkins",
+    ], page_token)
+    hoje = date.today().isoformat()
+    for field, value in page_fields.items():
+        rows.append([hoje, f"page_{field}", value])
+        print(f"    page_{field} = {value}")
+
     headers = ["data", "metrica", "valor"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "Meta_Organico_FB", token_g)
     gravar_dados("Meta_Organico_FB", headers, rows, token_g, key_cols=["data", "metrica"], historico=historico)
@@ -255,17 +295,16 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False, start_d
         until = date.today().isoformat()
         rows = _buscar_chunk_ig(since, until)
 
-    print("  Buscando follower_count via IG user fields...")
-    ig_user = graph_get(META_IG_ID, {
-        "fields":       "followers_count",
-        "access_token": ig_token,
-    })
-    fc = ig_user.get("followers_count")
-    if fc is not None:
-        rows.append([date.today().isoformat(), "follower_count", fc])
-        print(f"  follower_count = {fc}")
-    else:
-        print("  AVISO: follower_count nao retornado")
+    print("  Buscando campos atuais do IG user...")
+    ig_fields = buscar_campos_numericos(META_IG_ID, [
+        "followers_count",
+        "media_count",
+        "follows_count",
+    ], ig_token)
+    hoje = date.today().isoformat()
+    for field, value in ig_fields.items():
+        rows.append([hoje, field, value])
+        print(f"  {field} = {value}")
     print(f"  IG total linhas coletadas: {len(rows)}")
     headers = ["data", "metrica", "valor"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "Meta_Organico_IG", token_g)
@@ -273,17 +312,35 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False, start_d
 
 
 def obter_ig_media_insights(media_id: str, ig_token: str) -> dict:
-    metricas = ["reach", "saved", "views", "total_interactions", "shares"]
+    global IG_MEDIA_EXTRA_METRICS_ATIVAS
+    metricas_base = ["reach", "saved", "views", "total_interactions", "shares"]
+    metricas_extra = ["impressions", "follows", "profile_activity", "profile_visits", "website_clicks"]
+
+    insights = {}
     data = graph_get(f"{media_id}/insights", {
-        "metric":       ",".join(metricas),
+        "metric":       ",".join(metricas_base),
         "access_token": ig_token,
     })
-    insights = {}
     for item in data.get("data", []):
         nome = item.get("name", "")
         valores = item.get("values", [])
         if valores:
             insights[nome] = normalizar_valor(valores[0].get("value", 0))
+
+    if IG_MEDIA_EXTRA_METRICS_ATIVAS:
+        extra_data = graph_get(f"{media_id}/insights", {
+            "metric":       ",".join(metricas_extra),
+            "access_token": ig_token,
+        })
+        if extra_data.get("data"):
+            for item in extra_data["data"]:
+                nome = item.get("name", "")
+                valores = item.get("values", [])
+                if valores:
+                    insights[nome] = normalizar_valor(valores[0].get("value", 0))
+        else:
+            IG_MEDIA_EXTRA_METRICS_ATIVAS = False
+            print("  AVISO: metricas extras de IG posts nao retornaram dados; seguindo apenas com metricas base.")
     return insights
 
 
@@ -292,11 +349,19 @@ def atualizar_posts(token_g, page_token, historico=False, start_date: date = Non
     ig_token = page_token or META_TOKEN
     all_posts = []
     stop_pagination = False
+    campos_ig_post = "id,timestamp,caption,permalink,media_url,thumbnail_url,media_type,media_product_type,like_count,comments_count,is_comment_enabled"
     data = graph_get(f"{META_IG_ID}/media", {
-        "fields":       "id,timestamp,caption,permalink,media_url,thumbnail_url,media_type,media_product_type,like_count,comments_count",
+        "fields":       campos_ig_post,
         "limit":        "100",
         "access_token": ig_token,
     })
+    if not data.get("data"):
+        campos_ig_post = "id,timestamp,caption,permalink,media_url,thumbnail_url,media_type,media_product_type,like_count,comments_count"
+        data = graph_get(f"{META_IG_ID}/media", {
+            "fields":       campos_ig_post,
+            "limit":        "100",
+            "access_token": ig_token,
+        })
     for post in data.get("data", []):
         post_date = parse_date(post.get("timestamp", "")[:10]) if post.get("timestamp") else date.today()
         if historico and post_date < start_date:
@@ -329,6 +394,13 @@ def atualizar_posts(token_g, page_token, historico=False, start_date: date = Non
             print(f"  IG Posts insights: {index}/{len(all_posts)}")
         insights = obter_ig_media_insights(post.get("id", ""), ig_token)
         time.sleep(REQUEST_SLEEP)
+        likes = inteiro(post.get("like_count", 0))
+        comentarios = inteiro(post.get("comments_count", 0))
+        saved = inteiro(insights.get("saved", 0))
+        shares = inteiro(insights.get("shares", 0))
+        total_interactions = inteiro(insights.get("total_interactions", 0))
+        reach = inteiro(insights.get("reach", 0))
+        engagement_total = total_interactions or (likes + comentarios + saved + shares)
         rows.append([
             post.get("id", ""),
             post.get("timestamp", "")[:10],
@@ -338,19 +410,28 @@ def atualizar_posts(token_g, page_token, historico=False, start_date: date = Non
             post.get("permalink", ""),
             post.get("media_url", ""),
             post.get("thumbnail_url", ""),
-            post.get("like_count", 0),
-            post.get("comments_count", 0),
-            insights.get("reach", 0),
-            insights.get("impressions", 0),
-            insights.get("saved", 0),
-            insights.get("views", 0),
-            insights.get("shares", 0),
-            insights.get("total_interactions", 0),
+            likes,
+            comentarios,
+            str(post.get("is_comment_enabled", "")),
+            reach,
+            inteiro(insights.get("impressions", 0)),
+            saved,
+            inteiro(insights.get("views", 0)),
+            shares,
+            total_interactions,
+            inteiro(insights.get("follows", 0)),
+            inteiro(insights.get("profile_activity", 0)),
+            inteiro(insights.get("profile_visits", 0)),
+            inteiro(insights.get("website_clicks", 0)),
+            engagement_total,
+            taxa(engagement_total, reach),
         ])
     print(f"  IG Posts coletados: {len(rows)}")
     headers = [
         "id", "data", "tipo", "produto", "caption", "permalink", "media_url", "thumbnail_url",
-        "likes", "comentarios", "reach", "impressions", "saved", "views", "shares", "total_interactions"
+        "likes", "comentarios", "comentarios_habilitados", "reach", "impressions", "saved", "views",
+        "shares", "total_interactions", "follows", "profile_activity", "profile_visits",
+        "website_clicks", "engagement_total", "engagement_rate_reach"
     ]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "IG_Posts", token_g)
     gravar_dados("IG_Posts", headers, rows, token_g, key_cols=["id"], historico=historico)
@@ -360,15 +441,25 @@ def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = 
     start_date = start_date or parse_date(DEFAULT_HISTORICO_START_DATE)
     since = start_date.isoformat() if historico else (date.today() - timedelta(days=JANELA_DIAS)).isoformat()
     until = date.today().isoformat()
+    reaction_fields = [
+        "reactions.type(LIKE).summary(total_count).limit(0).as(reactions_like)",
+        "reactions.type(LOVE).summary(total_count).limit(0).as(reactions_love)",
+        "reactions.type(HAHA).summary(total_count).limit(0).as(reactions_haha)",
+        "reactions.type(WOW).summary(total_count).limit(0).as(reactions_wow)",
+        "reactions.type(SAD).summary(total_count).limit(0).as(reactions_sad)",
+        "reactions.type(ANGRY).summary(total_count).limit(0).as(reactions_angry)",
+    ]
     fields = ",".join([
         "id",
         "created_time",
         "message",
         "permalink_url",
+        "full_picture",
+        "status_type",
         "shares",
         "comments.summary(true).limit(0)",
         "reactions.summary(total_count).limit(0)",
-    ])
+    ] + reaction_fields)
     rows = []
     data = graph_get(f"{META_PAGE_ID}/posts", {
         "fields":       fields,
@@ -377,17 +468,54 @@ def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = 
         "until":        until,
         "access_token": page_token,
     })
+    if not data.get("data"):
+        fields = ",".join([
+            "id",
+            "created_time",
+            "message",
+            "permalink_url",
+            "full_picture",
+            "status_type",
+            "shares",
+            "comments.summary(true).limit(0)",
+            "reactions.summary(total_count).limit(0)",
+        ])
+        data = graph_get(f"{META_PAGE_ID}/posts", {
+            "fields":       fields,
+            "limit":        "100",
+            "since":        since,
+            "until":        until,
+            "access_token": page_token,
+        })
     page_num = 1
     while True:
         for post in data.get("data", []):
+            shares = inteiro((post.get("shares") or {}).get("count", 0))
+            comentarios = extrair_summary_count(post, "comments")
+            reacoes = extrair_summary_count(post, "reactions")
+            reacoes_like = extrair_summary_count(post, "reactions_like")
+            reacoes_love = extrair_summary_count(post, "reactions_love")
+            reacoes_haha = extrair_summary_count(post, "reactions_haha")
+            reacoes_wow = extrair_summary_count(post, "reactions_wow")
+            reacoes_sad = extrair_summary_count(post, "reactions_sad")
+            reacoes_angry = extrair_summary_count(post, "reactions_angry")
             rows.append([
                 post.get("id", ""),
                 post.get("created_time", "")[:10],
                 post.get("message", ""),
                 post.get("permalink_url", ""),
-                int((post.get("shares") or {}).get("count", 0) or 0),
-                extrair_summary_count(post, "comments"),
-                extrair_summary_count(post, "reactions"),
+                post.get("full_picture", ""),
+                post.get("status_type", ""),
+                shares,
+                comentarios,
+                reacoes,
+                reacoes_like,
+                reacoes_love,
+                reacoes_haha,
+                reacoes_wow,
+                reacoes_sad,
+                reacoes_angry,
+                shares + comentarios + reacoes,
             ])
         next_url = data.get("paging", {}).get("next")
         if not historico or not next_url or page_num >= MAX_POST_PAGES:
@@ -404,8 +532,9 @@ def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = 
 
     print(f"  FB Posts coletados: {len(rows)}")
     headers = [
-        "id", "data", "message", "permalink_url",
-        "shares", "comentarios", "reacoes"
+        "id", "data", "message", "permalink_url", "full_picture", "status_type",
+        "shares", "comentarios", "reacoes", "reacoes_like", "reacoes_love",
+        "reacoes_haha", "reacoes_wow", "reacoes_sad", "reacoes_angry", "engagement_total"
     ]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "FB_Posts", token_g)
     gravar_dados("FB_Posts", headers, rows, token_g, key_cols=["id"], historico=historico)
