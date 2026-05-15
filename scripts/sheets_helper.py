@@ -25,9 +25,8 @@ def _get_spreadsheet_id() -> str:
 
 
 def normalizar_secret(value: str) -> str:
-    """Remove quebras de linha e aspas acidentais em secrets do GitHub."""
-    value = (value or "").strip()
-    value = value.replace("\\r", "").replace("\\n", "").strip()
+    """Remove artefatos de secrets do GitHub: BOM, newlines, aspas, URL encoding."""
+    value = (value or "").lstrip('﻿').strip().replace("\\r", "").replace("\\n", "").strip()
     if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
         value = value[1:-1].strip()
     if "%" in value:
