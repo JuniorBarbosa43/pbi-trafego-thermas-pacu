@@ -31,6 +31,8 @@ MAX_POST_PAGES = 50
 REQUEST_SLEEP = 0.2
 API_TIMEOUT = 60
 IG_MEDIA_EXTRA_METRICS_ATIVAS = True
+IG_STORY_METRICS_ATIVAS = True
+FB_STORY_INSIGHTS_ATIVOS = True
 
 
 def obter_page_token() -> str:
@@ -344,6 +346,83 @@ def obter_ig_media_insights(media_id: str, ig_token: str) -> dict:
     return insights
 
 
+def obter_story_insights(media_id: str, token: str, metricas: list) -> dict:
+    data = graph_get(f"{media_id}/insights", {
+        "metric":       ",".join(metricas),
+        "access_token": token,
+    })
+    insights = {}
+    for item in data.get("data", []):
+        nome = item.get("name", "")
+        valores = item.get("values", [])
+        if valores:
+            insights[nome] = normalizar_valor(valores[0].get("value", 0))
+    return insights
+
+
+def atualizar_ig_stories(token_g, page_token):
+    global IG_STORY_METRICS_ATIVAS
+    ig_token = page_token or META_TOKEN
+    rows = []
+    data = graph_get(f"{META_IG_ID}/stories", {
+        "fields":       "id,timestamp,media_type,media_url,permalink,thumbnail_url",
+        "limit":        "100",
+        "access_token": ig_token,
+    })
+    if not data.get("data"):
+        data = graph_get(f"{META_IG_ID}/stories", {
+            "fields":       "id,timestamp,media_type,media_url",
+            "limit":        "100",
+            "access_token": ig_token,
+        })
+
+    stories = data.get("data", [])
+    print(f"  IG Stories ativos: {len(stories)}")
+    metricas_story = ["exits", "impressions", "reach", "replies", "taps_forward", "taps_back"]
+
+    for index, story in enumerate(stories, start=1):
+        if index == 1 or index % 10 == 0:
+            print(f"  IG Stories insights: {index}/{len(stories)}")
+        insights = {}
+        if IG_STORY_METRICS_ATIVAS:
+            insights = obter_story_insights(story.get("id", ""), ig_token, metricas_story)
+            if not insights:
+                IG_STORY_METRICS_ATIVAS = False
+                print("  AVISO: insights de IG Stories nao retornaram dados; seguindo so com metadados.")
+        reach = inteiro(insights.get("reach", 0))
+        impressions = inteiro(insights.get("impressions", 0))
+        replies = inteiro(insights.get("replies", 0))
+        taps_forward = inteiro(insights.get("taps_forward", 0))
+        taps_back = inteiro(insights.get("taps_back", 0))
+        exits = inteiro(insights.get("exits", 0))
+        rows.append([
+            story.get("id", ""),
+            story.get("timestamp", "")[:10],
+            story.get("timestamp", ""),
+            story.get("media_type", ""),
+            story.get("media_url", ""),
+            story.get("thumbnail_url", ""),
+            story.get("permalink", ""),
+            reach,
+            impressions,
+            replies,
+            taps_forward,
+            taps_back,
+            exits,
+            taxa(replies, reach),
+            taxa(exits, impressions),
+        ])
+        time.sleep(REQUEST_SLEEP)
+
+    headers = [
+        "id", "data", "timestamp", "tipo", "media_url", "thumbnail_url", "permalink",
+        "reach", "impressions", "replies", "taps_forward", "taps_back", "exits",
+        "reply_rate_reach", "exit_rate_impressions"
+    ]
+    criar_sheet_se_nao_existe(SPREADSHEET_ID, "IG_Stories", token_g)
+    upsert_por_data(SPREADSHEET_ID, "IG_Stories", headers, rows, token_g, key_cols=["id"])
+
+
 def atualizar_posts(token_g, page_token, historico=False, start_date: date = None):
     start_date = start_date or parse_date(DEFAULT_HISTORICO_START_DATE)
     ig_token = page_token or META_TOKEN
@@ -539,6 +618,89 @@ def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = 
     gravar_dados("FB_Posts", headers, rows, token_g, key_cols=["id"], historico=historico)
 
 
+def obter_fb_story_insights(story_id: str, page_token: str) -> dict:
+    global FB_STORY_INSIGHTS_ATIVOS
+    if not FB_STORY_INSIGHTS_ATIVOS:
+        return {}
+
+    insights = {}
+    for metricas in [
+        ["post_impressions", "post_impressions_unique", "post_engaged_users"],
+        ["post_video_views"],
+    ]:
+        data = graph_get(f"{story_id}/insights", {
+            "metric":       ",".join(metricas),
+            "access_token": page_token,
+        })
+        if data.get("data"):
+            for item in data["data"]:
+                nome = item.get("name", "")
+                valores = item.get("values", [])
+                if valores:
+                    insights[nome] = normalizar_valor(valores[0].get("value", 0))
+        else:
+            FB_STORY_INSIGHTS_ATIVOS = False
+            print("  AVISO: insights de FB Stories nao retornaram dados; seguindo so com metadados.")
+            break
+    return insights
+
+
+def atualizar_fb_stories(token_g, page_token):
+    fields = ",".join([
+        "id",
+        "created_time",
+        "message",
+        "permalink_url",
+        "full_picture",
+        "status_type",
+    ])
+    data = graph_get(f"{META_PAGE_ID}/stories", {
+        "fields":       fields,
+        "limit":        "100",
+        "access_token": page_token,
+    })
+    if not data.get("data"):
+        data = graph_get(f"{META_PAGE_ID}/stories", {
+            "fields":       "id,created_time",
+            "limit":        "100",
+            "access_token": page_token,
+        })
+    stories = data.get("data", [])
+    print(f"  FB Stories ativos: {len(stories)}")
+
+    rows = []
+    for index, story in enumerate(stories, start=1):
+        if index == 1 or index % 10 == 0:
+            print(f"  FB Stories insights: {index}/{len(stories)}")
+        insights = obter_fb_story_insights(story.get("id", ""), page_token)
+        impressions = inteiro(insights.get("post_impressions", 0))
+        reach = inteiro(insights.get("post_impressions_unique", 0))
+        engaged_users = inteiro(insights.get("post_engaged_users", 0))
+        video_views = inteiro(insights.get("post_video_views", 0))
+        rows.append([
+            story.get("id", ""),
+            story.get("created_time", "")[:10],
+            story.get("created_time", ""),
+            story.get("message", ""),
+            story.get("permalink_url", ""),
+            story.get("full_picture", ""),
+            story.get("status_type", ""),
+            reach,
+            impressions,
+            engaged_users,
+            video_views,
+            taxa(engaged_users, reach),
+        ])
+        time.sleep(REQUEST_SLEEP)
+
+    headers = [
+        "id", "data", "created_time", "message", "permalink_url", "full_picture", "status_type",
+        "reach", "impressions", "engaged_users", "video_views", "engagement_rate_reach"
+    ]
+    criar_sheet_se_nao_existe(SPREADSHEET_ID, "FB_Stories", token_g)
+    upsert_por_data(SPREADSHEET_ID, "FB_Stories", headers, rows, token_g, key_cols=["id"])
+
+
 def main():
     parser = argparse.ArgumentParser(description="Atualiza Meta Organico no Google Sheets")
     parser.add_argument("--historico", action="store_true", help="Fetch dados historicos desde a data inicial")
@@ -552,10 +714,14 @@ def main():
     atualizar_fb(token_g, page_token, historico=args.historico, start_date=start_date)
     print("FB Posts...")
     atualizar_fb_posts(token_g, page_token, historico=args.historico, start_date=start_date)
+    print("FB Stories...")
+    atualizar_fb_stories(token_g, page_token)
     print("IG Insights...")
     atualizar_ig(token_g, page_token, historico=args.historico, start_date=start_date)
     print("IG Posts...")
     atualizar_posts(token_g, page_token, historico=args.historico, start_date=start_date)
+    print("IG Stories...")
+    atualizar_ig_stories(token_g, page_token)
     print("Concluido.")
 
 
