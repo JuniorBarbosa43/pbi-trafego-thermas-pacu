@@ -666,9 +666,6 @@ def buscar_fb_stories(page_token: str) -> list:
         ("page_token page_id/stories_min", f"{META_PAGE_ID}/stories", "id,created_time", page_token),
         ("page_token me/stories", "me/stories", full_fields, page_token),
         ("page_token me/stories_min", "me/stories", "id,created_time", page_token),
-        ("user_token page_id/stories", f"{META_PAGE_ID}/stories", full_fields, META_TOKEN),
-        ("page_token page_id/published_stories", f"{META_PAGE_ID}/published_stories", full_fields, page_token),
-        ("user_token page_id/published_stories", f"{META_PAGE_ID}/published_stories", full_fields, META_TOKEN),
     ]
 
     for label, path, fields, token in tentativas:
@@ -684,27 +681,59 @@ def buscar_fb_stories(page_token: str) -> list:
     return []
 
 
+def buscar_ig_stories_para_fb_fallback(ig_token: str) -> list:
+    data = graph_get(f"{META_IG_ID}/stories", {
+        "fields":       "id,timestamp,media_type,media_url,permalink,thumbnail_url",
+        "limit":        "100",
+        "access_token": ig_token,
+    })
+    return data.get("data", [])
+
+
 def atualizar_fb_stories(token_g, page_token):
     stories = buscar_fb_stories(page_token)
+    usando_ig_fallback = False
+    if not stories:
+        stories = buscar_ig_stories_para_fb_fallback(page_token or META_TOKEN)
+        usando_ig_fallback = bool(stories)
+        if usando_ig_fallback:
+            print("  FB Stories: API da Page retornou 0; usando fallback de IG Stories crosspostados.")
     print(f"  FB Stories ativos: {len(stories)}")
 
     rows = []
     for index, story in enumerate(stories, start=1):
         if index == 1 or index % 10 == 0:
             print(f"  FB Stories insights: {index}/{len(stories)}")
-        insights = obter_fb_story_insights(story.get("id", ""), page_token)
-        impressions = inteiro(insights.get("post_impressions", 0))
-        reach = inteiro(insights.get("post_impressions_unique", 0))
-        engaged_users = inteiro(insights.get("post_engaged_users", 0))
-        video_views = inteiro(insights.get("post_video_views", 0))
+        if usando_ig_fallback:
+            insights = obter_story_insights(story.get("id", ""), page_token or META_TOKEN, ["reach", "replies", "navigation"])
+            reach = inteiro(insights.get("reach", 0))
+            impressions = 0
+            engaged_users = inteiro(insights.get("replies", 0))
+            video_views = 0
+            row_id = f"ig_crosspost:{story.get('id', '')}"
+            created_time = story.get("timestamp", "")
+            permalink_url = story.get("permalink", "")
+            full_picture = story.get("media_url", story.get("thumbnail_url", ""))
+            status_type = "IG_CROSSPOST_FALLBACK"
+        else:
+            insights = obter_fb_story_insights(story.get("id", ""), page_token)
+            impressions = inteiro(insights.get("post_impressions", 0))
+            reach = inteiro(insights.get("post_impressions_unique", 0))
+            engaged_users = inteiro(insights.get("post_engaged_users", 0))
+            video_views = inteiro(insights.get("post_video_views", 0))
+            row_id = story.get("id", "")
+            created_time = story.get("created_time", "")
+            permalink_url = story.get("permalink_url", "")
+            full_picture = story.get("full_picture", "")
+            status_type = story.get("status_type", "")
         rows.append([
-            story.get("id", ""),
-            story.get("created_time", "")[:10],
-            story.get("created_time", ""),
+            row_id,
+            created_time[:10],
+            created_time,
             story.get("message", ""),
-            story.get("permalink_url", ""),
-            story.get("full_picture", ""),
-            story.get("status_type", ""),
+            permalink_url,
+            full_picture,
+            status_type,
             reach,
             impressions,
             engaged_users,
