@@ -181,6 +181,19 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False, start_d
             extra_current = extra_chunk_end + timedelta(days=1)
             time.sleep(REQUEST_SLEEP)
 
+    print("  Buscando fan_count e followers_count via Page node...")
+    page_snapshot = graph_get(META_PAGE_ID, {
+        "fields": "fan_count,followers_count",
+        "access_token": page_token,
+    })
+    today = date.today().isoformat()
+    if page_snapshot.get("fan_count") is not None:
+        rows.append([today, "page_fan_count", int(page_snapshot["fan_count"])])
+        print(f"  page_fan_count = {page_snapshot['fan_count']}")
+    if page_snapshot.get("followers_count") is not None:
+        rows.append([today, "page_followers_count", int(page_snapshot["followers_count"])])
+        print(f"  page_followers_count = {page_snapshot['followers_count']}")
+
     headers = ["data", "metrica", "valor"]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "Meta_Organico_FB", token_g)
     gravar_dados("Meta_Organico_FB", headers, rows, token_g, key_cols=["data", "metrica"], historico=historico)
