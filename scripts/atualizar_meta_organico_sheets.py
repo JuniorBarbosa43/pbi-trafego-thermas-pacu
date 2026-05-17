@@ -286,7 +286,7 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False, start_d
 
 
 def obter_ig_media_insights(media_id: str, ig_token: str) -> dict:
-    metricas = ["reach", "saved", "views", "total_interactions", "shares"]
+    metricas = ["reach", "impressions", "saved", "views", "total_interactions", "shares"]
     data = graph_get(f"{media_id}/insights", {
         "metric":       ",".join(metricas),
         "access_token": ig_token,
