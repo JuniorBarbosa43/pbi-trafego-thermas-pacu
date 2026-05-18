@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "chart_taxa_eng",
   "position": { "x": 8, "y": 454, "z": 9000, "height": 226, "width": 618, "tabOrder": 9000 },

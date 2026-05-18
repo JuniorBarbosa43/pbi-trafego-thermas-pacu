@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "chart_acoes_ig",
   "position": { "x": 634, "y": 454, "z": 9100, "height": 226, "width": 638, "tabOrder": 9100 },

@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "divider_fb_ig",
   "position": { "x": 634, "y": 78, "z": 1500, "height": 96, "width": 4, "tabOrder": 1500 },

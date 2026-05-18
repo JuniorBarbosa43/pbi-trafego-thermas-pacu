@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "sl_mes",
   "position": { "x": 1132, "y": 43, "z": 5000, "height": 30, "width": 138, "tabOrder": 5000 },

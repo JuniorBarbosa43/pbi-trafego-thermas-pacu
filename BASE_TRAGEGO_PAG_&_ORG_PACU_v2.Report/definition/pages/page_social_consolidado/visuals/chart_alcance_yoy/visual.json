@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "chart_alcance_yoy",
   "position": { "x": 8, "y": 184, "z": 8000, "height": 270, "width": 820, "tabOrder": 8000 },

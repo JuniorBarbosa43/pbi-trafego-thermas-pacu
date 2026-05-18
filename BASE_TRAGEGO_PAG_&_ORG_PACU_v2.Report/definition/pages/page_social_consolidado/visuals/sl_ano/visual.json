@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "sl_ano",
   "position": { "x": 820, "y": 43, "z": 3000, "height": 30, "width": 130, "tabOrder": 3000 },

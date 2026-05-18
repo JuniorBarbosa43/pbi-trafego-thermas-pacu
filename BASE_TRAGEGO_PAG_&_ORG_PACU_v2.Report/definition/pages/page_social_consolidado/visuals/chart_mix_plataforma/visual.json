@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "chart_mix_plataforma",
   "position": { "x": 836, "y": 184, "z": 8100, "height": 270, "width": 436, "tabOrder": 8100 },

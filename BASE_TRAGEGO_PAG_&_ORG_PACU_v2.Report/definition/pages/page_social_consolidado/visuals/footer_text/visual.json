@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "footer_text",
   "position": { "x": 16, "y": 686, "z": 2000, "height": 24, "width": 700, "tabOrder": 2000 },

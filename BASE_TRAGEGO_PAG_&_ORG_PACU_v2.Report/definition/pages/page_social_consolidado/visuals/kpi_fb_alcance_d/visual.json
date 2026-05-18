@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "kpi_fb_alcance_d",
   "position": { "x": 8, "y": 148, "z": 7000, "height": 36, "width": 198, "tabOrder": 7000 },
