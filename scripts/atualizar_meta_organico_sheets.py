@@ -369,6 +369,22 @@ def atualizar_posts(token_g, page_token, historico=False, start_date: date = Non
     gravar_dados("IG_Posts", headers, rows, token_g, key_cols=["id"], historico=historico)
 
 
+def obter_fb_post_insights(post_id: str, page_token: str) -> dict:
+    """Busca métricas de insight por post: alcance, impressões, cliques."""
+    metricas = ["post_impressions", "post_impressions_unique", "post_clicks"]
+    data = graph_get(f"{post_id}/insights", {
+        "metric":       ",".join(metricas),
+        "access_token": page_token,
+    })
+    insights = {}
+    for item in data.get("data", []):
+        nome = item.get("name", "")
+        valores = item.get("values", [])
+        if valores:
+            insights[nome] = normalizar_valor(valores[0].get("value", 0))
+    return insights
+
+
 def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = None):
     start_date = start_date or parse_date(DEFAULT_HISTORICO_START_DATE)
     since = start_date.isoformat() if historico else (date.today() - timedelta(days=JANELA_DIAS)).isoformat()
@@ -378,6 +394,7 @@ def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = 
         "created_time",
         "message",
         "permalink_url",
+        "media_type",
         "shares",
         "comments.summary(true).limit(0)",
         "reactions.summary(total_count).limit(0)",
@@ -392,15 +409,23 @@ def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = 
     })
     page_num = 1
     while True:
-        for post in data.get("data", []):
+        for index, post in enumerate(data.get("data", []), start=1):
+            if index == 1 or index % 50 == 0:
+                print(f"  FB Posts insights: {index}...")
+            insights = obter_fb_post_insights(post.get("id", ""), page_token)
+            time.sleep(REQUEST_SLEEP)
             rows.append([
                 post.get("id", ""),
                 post.get("created_time", "")[:10],
+                post.get("media_type", ""),
                 post.get("message", ""),
                 post.get("permalink_url", ""),
                 int((post.get("shares") or {}).get("count", 0) or 0),
                 extrair_summary_count(post, "comments"),
                 extrair_summary_count(post, "reactions"),
+                insights.get("post_impressions", 0),
+                insights.get("post_impressions_unique", 0),
+                insights.get("post_clicks", 0),
             ])
         next_url = data.get("paging", {}).get("next")
         if not historico or not next_url or page_num >= MAX_POST_PAGES:
@@ -417,8 +442,9 @@ def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = 
 
     print(f"  FB Posts coletados: {len(rows)}")
     headers = [
-        "id", "data", "message", "permalink_url",
-        "shares", "comentarios", "reacoes"
+        "id", "data", "tipo", "message", "permalink_url",
+        "shares", "comentarios", "reacoes",
+        "impressions", "reach", "clicks",
     ]
     criar_sheet_se_nao_existe(SPREADSHEET_ID, "FB_Posts", token_g)
     gravar_dados("FB_Posts", headers, rows, token_g, key_cols=["id"], historico=historico)
