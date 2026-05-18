@@ -23,10 +23,10 @@
                       "Entity": "00_Médidas"
                     }
                   },
-                  "Property": "IG Taxa Engajamento"
+                  "Property": "IG Interações ΔYoY"
                 }
               },
-              "queryRef": "00_Médidas.IG Taxa Engajamento"
+              "queryRef": "00_Médidas.IG Interações ΔYoY"
             }
           ]
         }
