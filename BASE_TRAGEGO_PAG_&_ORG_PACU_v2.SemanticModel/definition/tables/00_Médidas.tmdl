@@ -968,8 +968,8 @@ table 00_Médidas
 	measure 'IG Alcance ΔYoY' =
 			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
 			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
-			VAR _cy = CALCULATE(SUM(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "reach", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax)
-			VAR _ly = CALCULATE(SUM(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "reach", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
+			VAR _cy = CALCULATE(SUM(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "reach", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = CALCULATE(SUM(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "reach", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
 			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
 		formatString: +0.0%;-0.0%;0.0%
 		displayFolder: Orgânico IG
@@ -2037,26 +2037,6 @@ table 00_Médidas
 		formatString: +0.0%;-0.0%;0.0%
 		displayFolder: Orgânico IG
 		lineageTag: 1023a90b-dceb-48dd-952a-fecb813d7d71
-
-	/// Crescimento líquido de seguidores IG no ano — último snapshot menos primeiro snapshot do ano.
-	measure 'IG Crescimento Líquido' =
-			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
-			VAR _ultimo  = CALCULATE(MAX(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax)
-			VAR _primeiro = CALCULATE(MIN(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax)
-			RETURN IF(ISBLANK(_ultimo) || ISBLANK(_primeiro), BLANK(), _ultimo - _primeiro)
-		formatString: +#,##0;-#,##0;0
-		displayFolder: Orgânico IG
-		lineageTag: soc-igcresl-4c76-IG00000001
-
-	/// YoY do crescimento líquido de seguidores IG.
-	measure 'IG Crescimento ΔYoY' =
-			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
-			VAR _cy = CALCULATE(MAX(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax) - CALCULATE(MIN(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax)
-			VAR _ly = CALCULATE(MAX(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax - 1) - CALCULATE(MIN(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax - 1)
-			RETURN IF(ABS(_ly) > 0, DIVIDE(_cy - _ly, ABS(_ly)), BLANK())
-		formatString: +0.0%;-0.0%;0.0%
-		displayFolder: Orgânico IG
-		lineageTag: soc-igcresdyoy-4c76-IG00000002
 
 	/// Delta MoM do Investimento Meta.
 	measure 'Meta Investimento ΔMoM' =
@@ -3138,6 +3118,26 @@ table 00_Médidas
 		formatString: 0.0%
 		displayFolder: Orgânico Consolidado
 		lineageTag: soc-igshare-4c76-SOC00000003
+
+	/// Crescimento líquido de seguidores IG no ano — último snapshot menos primeiro snapshot do ano.
+	measure 'IG Crescimento Líquido' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _ultimo  = CALCULATE(MAX(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax)
+			VAR _primeiro = CALCULATE(MIN(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax)
+			RETURN IF(ISBLANK(_ultimo) || ISBLANK(_primeiro), BLANK(), _ultimo - _primeiro)
+		formatString: +#,##0;-#,##0;0
+		displayFolder: Orgânico IG
+		lineageTag: soc-igcresl-4c76-IG00000001
+
+	/// YoY do crescimento líquido de seguidores IG.
+	measure 'IG Crescimento ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _cy = CALCULATE(MAX(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax) - CALCULATE(MIN(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = CALCULATE(MAX(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax - 1) - CALCULATE(MIN(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax - 1)
+			RETURN IF(ABS(_ly) > 0, DIVIDE(_cy - _ly, ABS(_ly)), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Orgânico IG
+		lineageTag: soc-igcresdyoy-4c76-IG00000002
 
 	column Value
 		lineageTag: f7d2cc73-245c-4e9d-8af1-68b56a029069
