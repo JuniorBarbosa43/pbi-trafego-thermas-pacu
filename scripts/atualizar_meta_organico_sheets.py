@@ -454,19 +454,25 @@ def main():
     parser = argparse.ArgumentParser(description="Atualiza Meta Organico no Google Sheets")
     parser.add_argument("--historico", action="store_true", help="Fetch dados historicos desde a data inicial")
     parser.add_argument("--start-date", default=DEFAULT_HISTORICO_START_DATE, help="Data inicial do historico (YYYY-MM-DD)")
+    parser.add_argument("--somente", choices=["fb", "fb-posts", "ig", "ig-posts"], help="Executa apenas o modulo especificado")
     args = parser.parse_args()
     start_date = parse_date(args.start_date)
+    somente = args.somente
     print("=== Meta Organico -> Google Sheets ===")
     page_token = obter_page_token()
     token_g = obter_access_token(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN)
-    print("FB Insights...")
-    atualizar_fb(token_g, page_token, historico=args.historico, start_date=start_date)
-    print("FB Posts...")
-    atualizar_fb_posts(token_g, page_token, historico=args.historico, start_date=start_date)
-    print("IG Insights...")
-    atualizar_ig(token_g, page_token, historico=args.historico, start_date=start_date)
-    print("IG Posts...")
-    atualizar_posts(token_g, page_token, historico=args.historico, start_date=start_date)
+    if not somente or somente == "fb":
+        print("FB Insights...")
+        atualizar_fb(token_g, page_token, historico=args.historico, start_date=start_date)
+    if not somente or somente == "fb-posts":
+        print("FB Posts...")
+        atualizar_fb_posts(token_g, page_token, historico=args.historico, start_date=start_date)
+    if not somente or somente == "ig":
+        print("IG Insights...")
+        atualizar_ig(token_g, page_token, historico=args.historico, start_date=start_date)
+    if not somente or somente == "ig-posts":
+        print("IG Posts...")
+        atualizar_posts(token_g, page_token, historico=args.historico, start_date=start_date)
     print("Concluido.")
 
 

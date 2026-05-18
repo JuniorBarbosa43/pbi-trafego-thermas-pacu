@@ -1,7 +1,19 @@
 name: Carga Historica -> Google Sheets
 
 on:
-  workflow_dispatch:       # Apenas execucao manual
+  workflow_dispatch:
+    inputs:
+      somente:
+        description: 'Modulo a executar (deixe vazio para todos)'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - fb
+          - fb-posts
+          - ig
+          - ig-posts
 
 jobs:
 
@@ -71,7 +83,13 @@ jobs:
           GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
-        run: python scripts/atualizar_meta_organico_sheets.py --historico
+        run: |
+          SOMENTE="${{ github.event.inputs.somente }}"
+          if [ -n "$SOMENTE" ]; then
+            python scripts/atualizar_meta_organico_sheets.py --historico --somente "$SOMENTE"
+          else
+            python scripts/atualizar_meta_organico_sheets.py --historico
+          fi
 
   # ---------------------------------------------------------
   google-ads-historico:
