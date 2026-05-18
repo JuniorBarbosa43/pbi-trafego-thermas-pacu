@@ -98,14 +98,16 @@
       "dataColors": [
         {
           "selector": {
-            "data": {
-              "expr": {
-                "Measure": {
-                  "Expression": { "SourceRef": { "Entity": "00_Médidas" } },
-                  "Property": "FB Alcance Único Ano Anterior"
+            "data": [
+              {
+                "expr": {
+                  "Measure": {
+                    "Expression": { "SourceRef": { "Entity": "00_Médidas" } },
+                    "Property": "FB Alcance Único Ano Anterior"
+                  }
                 }
               }
-            }
+            ]
           },
           "properties": {
             "fill": {
@@ -117,14 +119,16 @@
         },
         {
           "selector": {
-            "data": {
-              "expr": {
-                "Measure": {
-                  "Expression": { "SourceRef": { "Entity": "00_Médidas" } },
-                  "Property": "FB Alcance Único"
+            "data": [
+              {
+                "expr": {
+                  "Measure": {
+                    "Expression": { "SourceRef": { "Entity": "00_Médidas" } },
+                    "Property": "FB Alcance Único"
+                  }
                 }
               }
-            }
+            ]
           },
           "properties": {
             "fill": {
@@ -136,14 +140,16 @@
         },
         {
           "selector": {
-            "data": {
-              "expr": {
-                "Measure": {
-                  "Expression": { "SourceRef": { "Entity": "00_Médidas" } },
-                  "Property": "IG Alcance Ano Anterior"
+            "data": [
+              {
+                "expr": {
+                  "Measure": {
+                    "Expression": { "SourceRef": { "Entity": "00_Médidas" } },
+                    "Property": "IG Alcance Ano Anterior"
+                  }
                 }
               }
-            }
+            ]
           },
           "properties": {
             "fill": {
@@ -155,14 +161,16 @@
         },
         {
           "selector": {
-            "data": {
-              "expr": {
-                "Measure": {
-                  "Expression": { "SourceRef": { "Entity": "00_Médidas" } },
-                  "Property": "IG Alcance"
+            "data": [
+              {
+                "expr": {
+                  "Measure": {
+                    "Expression": { "SourceRef": { "Entity": "00_Médidas" } },
+                    "Property": "IG Alcance"
+                  }
                 }
               }
-            }
+            ]
           },
           "properties": {
             "fill": {
