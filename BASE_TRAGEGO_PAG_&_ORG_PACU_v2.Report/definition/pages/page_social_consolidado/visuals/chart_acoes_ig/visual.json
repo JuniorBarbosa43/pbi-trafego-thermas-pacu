@@ -1,0 +1,42 @@
+﻿{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "chart_acoes_ig",
+  "position": { "x": 634, "y": 454, "z": 9100, "height": 226, "width": 638, "tabOrder": 9100 },
+  "visual": {
+    "visualType": "lineClusteredColumnComboChart",
+    "query": { "queryState": {
+      "Category": { "projections": [{ "field": { "Column": { "Expression": { "SourceRef": { "Entity": "01_Calendário" } }, "Property": "Mês" } }, "queryRef": "01_Calendário.Mês", "nativeQueryRef": "Mês", "active": true }] },
+      "Y": { "projections": [
+        { "field": { "Measure": { "Expression": { "SourceRef": { "Entity": "00_Médidas" } }, "Property": "IG Profile Views" } }, "queryRef": "00_Médidas.IG Profile Views", "nativeQueryRef": "IG Profile Views" }
+      ] },
+      "Y2": { "projections": [
+        { "field": { "Measure": { "Expression": { "SourceRef": { "Entity": "00_Médidas" } }, "Property": "IG Website Clicks" } }, "queryRef": "00_Médidas.IG Website Clicks", "nativeQueryRef": "IG Website Clicks" },
+        { "field": { "Measure": { "Expression": { "SourceRef": { "Entity": "00_Médidas" } }, "Property": "IG Cliques Bio" } }, "queryRef": "00_Médidas.IG Cliques Bio", "nativeQueryRef": "IG Cliques Bio" }
+      ] }
+    } },
+    "objects": {
+      "categoryAxis": [{ "properties": { "fontSize": { "expr": { "Literal": { "Value": "9D" } } }, "labelColor": { "solid": { "color": { "expr": { "ThemeDataColor": { "ColorId": 0, "Percent": 0 } } } } }, "showAxisTitle": { "expr": { "Literal": { "Value": "false" } } } } }],
+      "valueAxis": [{ "properties": { "fontSize": { "expr": { "Literal": { "Value": "9D" } } }, "labelColor": { "solid": { "color": { "expr": { "ThemeDataColor": { "ColorId": 0, "Percent": 0 } } } } }, "showAxisTitle": { "expr": { "Literal": { "Value": "false" } } }, "gridlineColor": { "solid": { "color": { "expr": { "Literal": { "Value": "'#30363D'" } } } } } } }],
+      "legend": [{ "properties": { "show": { "expr": { "Literal": { "Value": "true" } } }, "fontSize": { "expr": { "Literal": { "Value": "9D" } } }, "labelColor": { "solid": { "color": { "expr": { "ThemeDataColor": { "ColorId": 0, "Percent": 0 } } } } } } }],
+      "labels": [{ "properties": { "show": { "expr": { "Literal": { "Value": "false" } } } } }],
+      "seriesLabels": [{ "properties": { "show": { "expr": { "Literal": { "Value": "false" } } } } }],
+      "lineStyles": [{ "properties": { "showMarker": { "expr": { "Literal": { "Value": "true" } } }, "markerSize": { "expr": { "Literal": { "Value": "3D" } } }, "lineChartType": { "expr": { "Literal": { "Value": "'smooth'" } } } } }]
+    },
+        "visualContainerObjects": {
+      "title": [{ "properties": {
+        "text": { "expr": { "Literal": { "Value": "Ações de Conversão — Instagram" } } },
+        "show": { "expr": { "Literal": { "Value": "true" } } },
+        "fontColor": { "solid": { "color": { "expr": { "ThemeDataColor": { "ColorId": 0, "Percent": 0 } } } } },
+        "background": { "solid": { "color": { "expr": { "Literal": { "Value": "'#161B22'" } } } } },
+        "alignment": { "expr": { "Literal": { "Value": "'center'" } } },
+        "fontSize": { "expr": { "Literal": { "Value": "12D" } } },
+        "bold": { "expr": { "Literal": { "Value": "true" } } },
+        "fontFamily": { "expr": { "Literal": { "Value": "'Segoe UI'" } } }
+      } }],
+      "background": [{ "properties": { "show": { "expr": { "Literal": { "Value": "true" } } }, "color": { "solid": { "color": { "expr": { "Literal": { "Value": "'#161B22'" } } } } }, "transparency": { "expr": { "Literal": { "Value": "0D" } } } } }],
+      "border": [{ "properties": { "show": { "expr": { "Literal": { "Value": "true" } } }, "color": { "solid": { "color": { "expr": { "ThemeDataColor": { "ColorId": 0, "Percent": 0 } } } } }, "radius": { "expr": { "Literal": { "Value": "7D" } } }, "width": { "expr": { "Literal": { "Value": "2D" } } } } }],
+      "visualTooltip": [{ "properties": { "fontSize": { "expr": { "Literal": { "Value": "'10'" } } }, "background": { "solid": { "color": { "expr": { "Literal": { "Value": "'#1F2937'" } } } } } } }],
+      "visualHeader": [{ "properties": { "show": { "expr": { "Literal": { "Value": "false" } } } } }]
+    }
+  }
+}

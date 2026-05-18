@@ -3059,6 +3059,66 @@ table 00_Médidas
 		displayFolder: Orgânico IG
 		lineageTag: orgig-taxa-cc04-4c76-TAXA0000002
 
+	/// Alcance único FB fixo 2024 para gráfico YoY — ignora slicer Ano por design.
+	measure 'FB Alcance 2024' =
+			CALCULATE(
+			    CALCULATE(
+			        SUM(Meta_Organico_FB[valor]),
+			        Meta_Organico_FB[metrica] = "page_impressions_unique"
+			    ),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = 2024
+			)
+		formatString: #,##0
+		displayFolder: Orgânico FB\YoY
+		lineageTag: soc-fbalc24-cc01-4c76-FBA20240001
+
+	/// Alcance único FB fixo 2025 para gráfico YoY — ignora slicer Ano por design.
+	measure 'FB Alcance 2025' =
+			CALCULATE(
+			    CALCULATE(
+			        SUM(Meta_Organico_FB[valor]),
+			        Meta_Organico_FB[metrica] = "page_impressions_unique"
+			    ),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = 2025
+			)
+		formatString: #,##0
+		displayFolder: Orgânico FB\YoY
+		lineageTag: soc-fbalc25-cc01-4c76-FBA20250001
+
+	/// Alcance único FB fixo 2026 para gráfico YoY — ignora slicer Ano por design.
+	measure 'FB Alcance 2026' =
+			CALCULATE(
+			    CALCULATE(
+			        SUM(Meta_Organico_FB[valor]),
+			        Meta_Organico_FB[metrica] = "page_impressions_unique"
+			    ),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = 2026
+			)
+		formatString: #,##0
+		displayFolder: Orgânico FB\YoY
+		lineageTag: soc-fbalc26-cc01-4c76-FBA20260001
+
+	/// Alcance total consolidado FB + IG — visão de presença orgânica combinada.
+	measure 'Total Social Alcance' = [FB Alcance Único] + [IG Alcance]
+		formatString: #,##0
+		displayFolder: Orgânico Consolidado
+		lineageTag: soc-total-alc-4c76-SOC00000001
+
+	/// Participação do Facebook no alcance orgânico total — para gráfico de mix.
+	measure 'FB Share Alcance %' = DIVIDE([FB Alcance Único], [Total Social Alcance])
+		formatString: 0.0%
+		displayFolder: Orgânico Consolidado
+		lineageTag: soc-fbshare-4c76-SOC00000002
+
+	/// Participação do Instagram no alcance orgânico total — para gráfico de mix.
+	measure 'IG Share Alcance %' = DIVIDE([IG Alcance], [Total Social Alcance])
+		formatString: 0.0%
+		displayFolder: Orgânico Consolidado
+		lineageTag: soc-igshare-4c76-SOC00000003
+
 	column Value
 		lineageTag: f7d2cc73-245c-4e9d-8af1-68b56a029069
 		sourceColumn: [Value]

@@ -1,0 +1,15 @@
+﻿{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "header_title",
+  "position": { "x": 16, "y": 7, "z": 2000, "height": 28, "width": 580, "tabOrder": 2000 },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [{ "properties": { "paragraphs": [{ "textRuns": [{ "value": "Social Orgânico  ·  Facebook & Instagram", "textStyle": { "fontFamily": "Segoe UI", "fontSize": "14pt", "bold": true, "color": "#F0F6FC" } }], "horizontalTextAlignment": "left" }] } }]
+    },
+    "visualContainerObjects": {
+      "border": [{ "properties": { "show": { "expr": { "Literal": { "Value": "false" } } } } }],
+      "visualHeader": [{ "properties": { "show": { "expr": { "Literal": { "Value": "false" } } } } }]
+    }
+  }
+}
