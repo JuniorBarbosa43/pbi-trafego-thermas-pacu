@@ -1,0 +1,32 @@
+relationship Cal_GoogleAds_date
+	fromColumn: Google_Ads_Campanhas.date
+	toColumn: 01_Calendário.Date
+
+relationship Cal_MetaAds_dateStart
+	fromColumn: Meta_Ads_Campanhas.date_start
+	toColumn: 01_Calendário.Date
+
+relationship Cal_ClimaTempo_Date
+	fromColumn: ClimaTempo.Date
+	toColumn: 01_Calendário.Date
+
+relationship Cal_MetaOrgFB_DateKey
+	fromColumn: Meta_Organico_FB.DateKey
+	toColumn: 01_Calendário.Date
+
+relationship Cal_MetaOrgIG_DateKey
+	fromColumn: Meta_Organico_IG.DateKey
+	toColumn: 01_Calendário.Date
+
+relationship Cal_IGPosts_DateKey
+	fromColumn: IG_Posts.DateKey
+	toColumn: 01_Calendário.Date
+
+relationship Cal_LimberVendas_DateKey
+	fromColumn: Limber_Vendas.DateKey
+	toColumn: 01_Calendário.Date
+
+relationship Cal_FBPosts_DateKey
+	fromColumn: FB_Posts.DateKey
+	toColumn: 01_Calendário.Date
+

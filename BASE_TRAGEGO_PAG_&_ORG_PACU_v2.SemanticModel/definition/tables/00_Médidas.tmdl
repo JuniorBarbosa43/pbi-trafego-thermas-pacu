@@ -1,0 +1,3067 @@
+table 00_Médidas
+	lineageTag: 2482a357-fc92-4cb3-b6ed-8b722eff89b1
+
+	/// PLACEHOLDER — Oportunidades ganhas. Retorna 0 até integração CRM/GHL.
+	measure 'Oport Ganhas' = 0
+		formatString: #,##0
+		displayFolder: Funil de Vendas
+		lineageTag: bb9a30fa-8e0a-4063-8f3f-58f83477722b
+
+	/// PLACEHOLDER — Oportunidades perdidas. Retorna 0 até integração CRM/GHL.
+	measure 'Oport Perdidas' = 0
+		formatString: #,##0
+		displayFolder: Funil de Vendas
+		lineageTag: c6872b0f-97c6-4755-a390-597ff528996b
+
+	/// PLACEHOLDER — Oportunidades abertas. Retorna 0 até integração CRM/GHL.
+	measure 'Oport Abertas' = 0
+		formatString: #,##0
+		displayFolder: Funil de Vendas
+		lineageTag: 6cd7af1a-426a-4799-bea5-aebc0c43e82a
+
+	/// PLACEHOLDER — Taxa de fechamento. Retorna 0 até integração CRM/GHL.
+	measure 'Taxa Fechamento' = 0
+		formatString: 0.00%
+		displayFolder: Funil de Vendas
+		lineageTag: 05af8da6-5b69-4f71-9c10-f91de1dfa7b6
+
+	/// PLACEHOLDER — Valor monetário de vendas confirmadas. Retorna R$ 0 até integração Limber.
+	measure 'Valor Ganho' = 0
+		formatString: R$ #,0.00
+		displayFolder: Funil de Vendas
+		lineageTag: 98d3fc20-e509-482e-89e4-1b0b66e7f81b
+
+	/// PLACEHOLDER — Valor de oportunidades em aberto. Retorna R$ 0 até integração CRM/GHL.
+	measure 'Valor Aberto' = 0
+		formatString: R$ #,0.00
+		displayFolder: Funil de Vendas
+		lineageTag: d506f149-f229-4123-98df-94451643d02d
+
+	/// Ticket médio por pedido (Localizador único), filtrado pelo ano selecionado.
+	measure 'Ticket Médio Geral' =
+			VAR _receita = [Receita Limber]
+			VAR _pedidos = [Pedidos Confirmados]
+			RETURN DIVIDE(_receita, _pedidos)
+		formatString: R$ #,##0.00
+		displayFolder: Funil de Vendas
+		lineageTag: 7c69b673-4e7d-4a80-97a9-a3c0da8f1b3a
+
+	/// Investimento Meta Ads. Default = ano corrente via SELECTEDVALUE quando slicer não filtrado.
+	measure 'Meta Investimento Total' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Ads_Campanhas[spend]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: R$ #,##0.00
+		displayFolder: Meta Ads
+		lineageTag: 0d93640e-f0cf-40f0-93c3-5154a49fc888
+
+	/// Impressões Meta Ads. Filtrado pelo ano selecionado (ou ano corrente por padrão).
+	measure 'Meta Impressões' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Ads_Campanhas[impressions]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: Meta Ads
+		lineageTag: d7770f95-a0a0-433f-8f29-f8f7dffcb57d
+
+	/// Alcance Meta Ads. Filtrado pelo ano selecionado (ou ano corrente por padrão).
+	measure 'Meta Alcance' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Ads_Campanhas[reach]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: Meta Ads
+		lineageTag: 2be6e7de-e7db-41e2-8582-4f31c824a621
+
+	/// Cliques Meta Ads. Default = ano corrente via SELECTEDVALUE quando slicer não filtrado.
+	measure 'Meta Cliques' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Ads_Campanhas[clicks]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: Meta Ads
+		lineageTag: e9016668-1777-41d6-9108-714ae230bdca
+
+	/// CTR ponderado (cliques/impressões*100) das campanhas Meta Ads. Filtrado via medidas base que já aplicam o ano corrente.
+	measure 'Meta CTR Médio' = DIVIDE([Meta Cliques], [Meta Impressões]) * 100
+		formatString: 0.00"%"
+		displayFolder: Meta Ads
+		lineageTag: 0380dccb-8be1-4d3d-b26a-65528ad6f82b
+
+	/// Custo por mil impressões nas campanhas Meta Ads.
+	measure 'Meta CPM' = DIVIDE([Meta Investimento Total], [Meta Impressões]) * 1000
+		formatString: R$ #,##0.00
+		displayFolder: Meta Ads
+		lineageTag: ee2c188c-28c6-4053-8d12-33c6373a3e17
+
+	/// Custo por clique nas campanhas Meta Ads.
+	measure 'Meta CPC' = DIVIDE([Meta Investimento Total], [Meta Cliques])
+		formatString: R$ #,##0.00
+		displayFolder: Meta Ads
+		lineageTag: 41f6124b-4c7c-4e32-aeba-8d225daa5a50
+
+	/// Investimento Google Ads. Default = ano corrente via SELECTEDVALUE quando slicer não filtrado.
+	measure 'GA Investimento' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    DIVIDE(SUM(Google_Ads_Campanhas[cost_micros]), 1000000),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: R$ #,##0.00
+		displayFolder: Google Ads
+		lineageTag: f90b90f8-589d-4530-9bb5-37fade89cc34
+
+	/// Impressões Google Ads. Filtrado pelo ano selecionado (ou ano corrente por padrão).
+	measure 'GA Impressões' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Google_Ads_Campanhas[impressions]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: Google Ads
+		lineageTag: 75575175-a354-4e2f-89d8-685a3d3c500c
+
+	/// Cliques Google Ads. Default = ano corrente via SELECTEDVALUE quando slicer não filtrado.
+	measure 'GA Cliques' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Google_Ads_Campanhas[clicks]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: Google Ads
+		lineageTag: 0996b544-d444-405a-84ab-a054ba83cd27
+
+	/// Taxa de cliques (CTR) das campanhas Google Ads.
+	measure 'GA CTR' = DIVIDE([GA Cliques], [GA Impressões])
+		formatString: 0.00%
+		displayFolder: Google Ads
+		lineageTag: 606a407d-ae46-42c0-9546-d8d87963dc9a
+
+	/// Custo por clique médio no Google Ads.
+	measure 'GA CPC' = DIVIDE([GA Investimento], [GA Cliques])
+		formatString: R$ #,##0.00
+		displayFolder: Google Ads
+		lineageTag: 4c92e8e5-7a73-417e-8e1a-46686d88f8b1
+
+	/// Custo por mil impressões no Google Ads.
+	measure 'GA CPM' = DIVIDE([GA Investimento], [GA Impressões]) * 1000
+		formatString: R$ #,##0.00
+		displayFolder: Google Ads
+		lineageTag: 10c82fd8-c59b-474d-b3e8-890dd93267b1
+
+	/// Investimento total consolidado Meta + Google. Usa as medidas base que já filtram pelo ano mais recente.
+	measure 'Total Investimento Ads' = [Meta Investimento Total] + [GA Investimento]
+		formatString: R$ #,##0.00
+		displayFolder: Tráfego Pago Consolidado
+		lineageTag: 981e2330-d732-44a9-bd96-7ecb9d94ce63
+
+	/// Cliques totais consolidados de todas as plataformas de ads.
+	measure 'Total Cliques Ads' = 0 + [Meta Cliques] + [GA Cliques]
+		formatString: #,##0
+		displayFolder: Tráfego Pago Consolidado
+		lineageTag: d0960846-cad0-4074-a1d0-1ce67d66c521
+
+	/// Impressões totais consolidadas Meta + Google.
+	measure 'Total Impressões Ads' = 0 + [Meta Impressões] + [GA Impressões]
+		formatString: #,##0
+		displayFolder: Tráfego Pago Consolidado
+		lineageTag: 3e031f73-b888-4eec-a7c7-1ab0652aea30
+
+	/// CTR médio geral consolidado (cliques / impressões) de todas as plataformas.
+	measure 'CTR Consolidado' = DIVIDE(0 + [Meta Cliques] + [GA Cliques], 0 + [Meta Impressões] + [GA Impressões])
+		formatString: 0.00%
+		displayFolder: Tráfego Pago Consolidado
+		lineageTag: 2340b829-241b-45dd-be85-06691a1bc038
+
+	/// Custo por clique médio geral (investimento total / cliques totais).
+	measure 'CPC Consolidado' = DIVIDE([Total Investimento Ads], [Total Cliques Ads])
+		formatString: R$ #,##0.00
+		displayFolder: Tráfego Pago Consolidado\Custo
+		lineageTag: 37f5cdc9-0a16-4273-abb5-2c8866345dd8
+
+	/// ROAS geral (Receita Limber / Investimento total Ads). Retorna 0 enquanto [Receita Limber] for placeholder.
+	measure ROAS =
+			VAR _receita = [Receita Limber]
+			VAR _investimento = [Total Investimento Ads]
+			RETURN
+			    IF(
+			        _receita > 0 && _investimento > 0,
+			        DIVIDE(_receita, _investimento),
+			        0
+			    )
+		formatString: 0.00"x"
+		displayFolder: Tráfego Pago Consolidado\Retorno
+		lineageTag: f2eccd7a-ab49-4896-9fda-780cc4f67f81
+
+	/// Custo total de marketing (Ads). Filtra automaticamente pelo ano mais recente.
+	measure 'Custo Total Marketing' = [Total Investimento Ads]
+		formatString: R$ #,##0.00
+		displayFolder: Tráfego Pago Consolidado\Custo
+		lineageTag: 12c0b60f-c043-4bfb-bd17-0cf130e242bc
+
+	/// Custo de aquisição por venda (ingresso). Usa Pedidos Confirmados com filtro de ano.
+	measure 'CAC (Custo por Venda)' =
+			VAR _custo = [Total Investimento Ads]
+			VAR _vendas = [Pedidos Confirmados]
+			RETURN
+			    IF(_vendas > 0, DIVIDE(_custo, _vendas), BLANK())
+		formatString: R$ #,##0.00
+		displayFolder: Tráfego Pago Consolidado\Custo
+		lineageTag: e3248159-b5e4-4bb0-a607-d8bfcd8313d2
+
+	/// Retorno líquido sobre investimento total em marketing. Retorna 0 enquanto [Receita Limber] for placeholder.
+	measure 'ROAS Líquido' =
+			VAR _receita = [Receita Limber]
+			VAR _custoTotal = [Custo Total Marketing]
+			RETURN
+			    IF(
+			        _receita > 0 && _custoTotal > 0,
+			        DIVIDE(_receita - _custoTotal, _custoTotal),
+			        0
+			    )
+		formatString: 0.00"x"
+		displayFolder: Tráfego Pago Consolidado\Retorno
+		lineageTag: c52c1be2-8672-471e-ac6b-c7aba10b5d69
+
+	/// Investimento Ads no mesmo período do ano anterior. Usa o ano base (atual ou selecionado) menos 1.
+	measure 'Invest Ads Ano Ant' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE([_Total Invest Bruto], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: R$ #,##0.00
+		displayFolder: Comparativos
+		lineageTag: 50b0ca63-5f28-4c29-b6f7-a216333dffdd
+
+	/// Variação percentual YoY do investimento total em Ads.
+	measure 'Investimento Ads ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _atual = CALCULATE([_Total Invest Bruto], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _anterior = [Invest Ads Ano Ant]
+			RETURN DIVIDE(_atual - _anterior, _anterior)
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Comparativos
+		lineageTag: 7d3bb7bb-83c7-4c76-a3b9-5719304325f4
+
+	/// Temperatura média no período selecionado (°C). Apenas histórico.
+	/// SELECTEDVALUE: usa o ano selecionado no slicer; default = ano corrente quando slicer em "tudo selecionado".
+	measure 'Clima Temp Média' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			VAR _meses = VALUES('01_Calendário'[MêsNúmero])
+			RETURN
+			CALCULATE(
+			    AVERAGE(ClimaTempo[TempMedia]),
+			    ClimaTempo[EhPrevisao] = "Histórico",
+			    FILTER(ALL(ClimaTempo), YEAR(ClimaTempo[Date]) = _ano && MONTH(ClimaTempo[Date]) IN _meses)
+			)
+		formatString: 0.0"°C"
+		displayFolder: Clima\Histórico
+		lineageTag: 53f4d0ec-f675-4eae-adaf-d5db49811576
+
+	/// Temperatura máxima média no período selecionado (°C). Apenas histórico.
+	measure 'Clima Temp Máxima' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			VAR _meses = VALUES('01_Calendário'[MêsNúmero])
+			RETURN
+			CALCULATE(
+			    AVERAGE(ClimaTempo[TempMax]),
+			    ClimaTempo[EhPrevisao] = "Histórico",
+			    FILTER(ALL(ClimaTempo), YEAR(ClimaTempo[Date]) = _ano && MONTH(ClimaTempo[Date]) IN _meses)
+			)
+		formatString: 0.0"°C"
+		displayFolder: Clima\Histórico
+		lineageTag: 4ba5d3a7-686a-494a-94e2-fd1d6b704e33
+
+	/// Precipitação total em mm no período. Chuva ≥ 2mm impacta o movimento do parque. Apenas histórico.
+	measure 'Clima Chuva Total' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			VAR _meses = VALUES('01_Calendário'[MêsNúmero])
+			RETURN
+			CALCULATE(
+			    SUM(ClimaTempo[Precipitacao_mm]),
+			    ClimaTempo[EhPrevisao] = "Histórico",
+			    FILTER(ALL(ClimaTempo), YEAR(ClimaTempo[Date]) = _ano && MONTH(ClimaTempo[Date]) IN _meses)
+			)
+		formatString: 0.0" mm"
+		displayFolder: Clima\Histórico
+		lineageTag: e60ac6a8-ef37-48b3-ae7c-894409faba33
+
+	/// Dias com clima ideal para parque aquático: temp ≥ 25°C e chuva < 2mm. Apenas histórico.
+	measure 'Clima Dias Bons Parque' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			VAR _meses = VALUES('01_Calendário'[MêsNúmero])
+			RETURN
+			CALCULATE(
+			    COUNTROWS(ClimaTempo),
+			    ClimaTempo[BomParaParque] = "Sim",
+			    ClimaTempo[EhPrevisao] = "Histórico",
+			    FILTER(ALL(ClimaTempo), YEAR(ClimaTempo[Date]) = _ano && MONTH(ClimaTempo[Date]) IN _meses)
+			)
+		formatString: #,##0
+		displayFolder: Clima\Histórico
+		lineageTag: bbad1a30-a99c-4c62-a931-de680cbc137f
+
+	/// Dias com chuva significativa (≥ 2mm) no período. Apenas histórico.
+	measure 'Clima Dias Chuvosos' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			VAR _meses = VALUES('01_Calendário'[MêsNúmero])
+			RETURN
+			CALCULATE(
+			    COUNTROWS(ClimaTempo),
+			    ClimaTempo[Precipitacao_mm] >= 2,
+			    ClimaTempo[EhPrevisao] = "Histórico",
+			    FILTER(ALL(ClimaTempo), YEAR(ClimaTempo[Date]) = _ano && MONTH(ClimaTempo[Date]) IN _meses)
+			)
+		formatString: #,##0
+		displayFolder: Clima\Histórico
+		lineageTag: 6b54e5c1-a84d-4359-bbd2-0c16f4bed046
+
+	/// Percentual de dias com clima ideal para parque aquático no período. Apenas histórico.
+	measure 'Clima % Dias Bons' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			VAR _meses = VALUES('01_Calendário'[MêsNúmero])
+			VAR _total =
+			    CALCULATE(
+			        COUNTROWS(ClimaTempo),
+			        ClimaTempo[EhPrevisao] = "Histórico",
+			        FILTER(ALL(ClimaTempo), YEAR(ClimaTempo[Date]) = _ano && MONTH(ClimaTempo[Date]) IN _meses)
+			    )
+			RETURN DIVIDE([Clima Dias Bons Parque], _total)
+		formatString: 0.0%
+		displayFolder: Clima\Histórico
+		lineageTag: 6344dc91-0914-4238-ba8f-0faf27c8cb2c
+
+	/// Temperatura média prevista para os próximos 7 dias (°C).
+	measure 'Temp Média Próximos 7d' =
+			CALCULATE(
+			    AVERAGE(ClimaTempo[TempMedia]),
+			    ClimaTempo[EhPrevisao] = "Previsao",
+			    DATESINPERIOD('01_Calendário'[Date], TODAY(), 7, DAY)
+			)
+		formatString: 0.0"°C"
+		displayFolder: Clima\Previsão
+		lineageTag: 4ae3fe69-c551-470a-8158-7792be38e16b
+
+	/// Dias com clima ideal nos próximos 7 dias. Para antecipar campanhas.
+	measure 'Dias Bons Próximos 7d' =
+			CALCULATE(
+			    COUNTROWS(FILTER(ClimaTempo, ClimaTempo[BomParaParque] = "Sim")),
+			    ClimaTempo[EhPrevisao] = "Previsao",
+			    DATESINPERIOD('01_Calendário'[Date], TODAY(), 7, DAY)
+			)
+		formatString: #,##0
+		displayFolder: Clima\Previsão
+		lineageTag: cb5c678f-537a-45ec-8c37-c6ad53d886a6
+
+	/// Média mensal de precipitação (mm). Agrega por mês e tira a média.
+	measure 'Chuva Média Mês' =
+			AVERAGEX(
+			    VALUES('01_Calendário'[AnoMes]),
+			    CALCULATE(SUM(ClimaTempo[Precipitacao_mm]))
+			)
+		formatString: 0.0" mm"
+		displayFolder: Clima\Histórico
+		lineageTag: eee3f3de-9c62-477b-93e7-ccf22ca35f8c
+
+	/// ROAS específico do Meta Ads. Retorna 0 enquanto [Receita Limber] for placeholder.
+	measure 'ROAS Meta' =
+			VAR _receita = [Receita Limber]
+			VAR _investimento = [Meta Investimento Total]
+			RETURN
+			    IF(_receita > 0 && _investimento > 0, DIVIDE(_receita, _investimento), 0)
+		formatString: 0.00"x"
+		displayFolder: Tráfego Pago Consolidado\ROI por Canal
+		lineageTag: 1b55697c-c8c6-4c84-ba07-a247dc74f31e
+
+	/// Total de conversões registradas no Google Ads. Filtrado pelo ano selecionado (ou ano corrente por padrão).
+	measure 'GA Conversões' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Google_Ads_Campanhas[conversions]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: Google Ads
+		lineageTag: a1b2c3d4-e5f6-7890-abcd-ef1234567003
+
+	/// ROAS específico do Google Ads. Retorna 0 enquanto [Receita Limber] for placeholder.
+	measure 'ROAS Google' =
+			VAR _receita = [Receita Limber]
+			VAR _investimento = [GA Investimento]
+			RETURN
+			    IF(_receita > 0 && _investimento > 0, DIVIDE(_receita, _investimento), 0)
+		formatString: 0.00"x"
+		displayFolder: Tráfego Pago Consolidado\ROI por Canal
+		lineageTag: 66e7b13e-697c-486f-87b0-dd296afb2ea2
+
+	/// Alcance único FB (page_impressions_unique). Disponivel desde jan/2026 (carga histórica iniciada em 14/04/2026).
+	measure 'FB Alcance Único' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _v = CALCULATE(
+			    SUM(Meta_Organico_FB[valor]),
+			    Meta_Organico_FB[metrica] = "page_impressions_unique",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+			RETURN IF(ISBLANK(_v), BLANK(), _v)
+		formatString: #,##0
+		displayFolder: Orgânico FB
+		lineageTag: 896c8adf-1a33-43cd-a2e2-adc9bdc7e918
+
+	/// Engajamento total da página Facebook (page_post_engagements).
+	measure 'FB Engajamento' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _metric = "page_post_engagements"
+			RETURN
+			    CALCULATE(
+			        SUM(Meta_Organico_FB[valor]),
+			        Meta_Organico_FB[metrica] = _metric,
+			        REMOVEFILTERS('01_Calendário'[Ano]),
+			        '01_Calendário'[Ano] = _anoMax
+			    )
+		formatString: #,##0
+		displayFolder: Orgânico FB
+		lineageTag: 2e2153d3-3772-4c75-9d42-0176bdeb331c
+
+	/// Visualizações totais da página Facebook (page_views_total).
+	measure 'FB Views Página' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _metric = "page_views_total"
+			RETURN
+			    CALCULATE(
+			        SUM(Meta_Organico_FB[valor]),
+			        Meta_Organico_FB[metrica] = _metric,
+			        REMOVEFILTERS('01_Calendário'[Ano]),
+			        '01_Calendário'[Ano] = _anoMax
+			    )
+		formatString: #,##0
+		displayFolder: Orgânico FB
+		lineageTag: 25e2d503-4f50-413c-b35b-4472fa55c350
+
+	/// Novos seguidores FB (page_daily_follows_unique). Disponivel desde jan/2026.
+	measure 'FB Novos Seguidores' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _v = CALCULATE(
+			    SUM(Meta_Organico_FB[valor]),
+			    Meta_Organico_FB[metrica] = "page_daily_follows_unique",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+			RETURN IF(ISBLANK(_v) || _v = 0, BLANK(), _v)
+		formatString: #,##0
+		displayFolder: Orgânico FB
+		lineageTag: 45089166-a1d3-4801-b13c-88970edf823c
+
+	/// Seguidores perdidos FB (page_daily_unfollows_unique). Disponivel desde jan/2026.
+	measure 'FB Seguidores Perdidos' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _v = CALCULATE(
+			    SUM(Meta_Organico_FB[valor]),
+			    Meta_Organico_FB[metrica] = "page_daily_unfollows_unique",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+			RETURN IF(ISBLANK(_v) || _v = 0, BLANK(), _v)
+		formatString: #,##0
+		displayFolder: Orgânico FB
+		lineageTag: a1b2c3d4-e5f6-7890-abcd-ef1234567002
+
+	/// Saldo de seguidores Facebook (novos - perdidos). Mostra 0 quando dados de seguidores não disponíveis.
+	measure 'FB Saldo Seguidores' =
+			VAR _novos = IF(ISBLANK([FB Novos Seguidores]), 0, [FB Novos Seguidores])
+			VAR _perdidos = IF(ISBLANK([FB Seguidores Perdidos]), 0, [FB Seguidores Perdidos])
+			RETURN _novos - _perdidos
+		formatString: #,##0
+		displayFolder: Orgânico FB
+		lineageTag: 1f907447-96cf-4b09-967f-b243dd8d578b
+
+	/// Visualizações de vídeo na página Facebook (page_video_views).
+	measure 'FB Vídeo Views' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _metric = "page_video_views"
+			RETURN
+			    CALCULATE(
+			        SUM(Meta_Organico_FB[valor]),
+			        Meta_Organico_FB[metrica] = _metric,
+			        REMOVEFILTERS('01_Calendário'[Ano]),
+			        '01_Calendário'[Ano] = _anoMax
+			    )
+		formatString: #,##0
+		displayFolder: Orgânico FB
+		lineageTag: 23f39f75-49ca-40e8-9e80-a30a229810a2
+
+	/// Alcance diário do Instagram (reach via Meta_Organico_IG).
+	measure 'IG Alcance' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _fromOrganic = CALCULATE(
+			    SUM(Meta_Organico_IG[valor]),
+			    Meta_Organico_IG[metrica] = "reach",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+			RETURN _fromOrganic
+		formatString: #,##0
+		displayFolder: Orgânico IG
+		lineageTag: 7525e658-7289-4dc9-bba6-bc25addfc1b6
+
+	/// Total de seguidores do Instagram (snapshot MAX). REMOVEFILTERS total do calendário — nunca retorna blank com slicer de Mês ativo.
+	measure 'IG Seguidores' =
+			CALCULATE(
+			    MAX(Meta_Organico_IG[valor]),
+			    Meta_Organico_IG[metrica] = "follower_count",
+			    REMOVEFILTERS('01_Calendário')
+			)
+		formatString: #,##0
+		displayFolder: Orgânico IG
+		lineageTag: fd2bc92d-388c-400e-8c2b-910a9e187163
+
+	/// Contas únicas engajadas no Instagram (accounts_engaged via API orgânica).
+	measure 'IG Contas Engajadas' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _v = CALCULATE(
+			    SUM(Meta_Organico_IG[valor]),
+			    Meta_Organico_IG[metrica] = "accounts_engaged",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+			RETURN _v
+		formatString: #,##0
+		displayFolder: Orgânico IG
+		lineageTag: bf70e049-8f8b-42e8-8ec9-ba64fe925afc
+
+	/// Total de interações do Instagram via API orgânica (total_interactions). Substitui cálculo antigo likes+comentarios de IG_Posts.
+	measure 'IG Interações' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_IG[valor]),
+			    Meta_Organico_IG[metrica] = "total_interactions",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+		formatString: #,##0
+		displayFolder: Orgânico IG
+		lineageTag: f2f713a3-6f34-49f3-9f5d-98dcb15ac343
+
+	/// Receita de ingressos confirmados (Limber e-commerce). Exclui locação de equipamentos.
+	/// DEDUPLICAÇÃO: usa ValorUnitario (único por linha) com filtro Status=Aprovada.
+	measure 'Receita Limber' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[ValorUnitario]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    NOT Limber_Vendas[Categoria] IN {"Aluguel de Boia - LOCAL", "Aluguel de Armários", "Pó Colorido"},
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: R$ #,##0.00
+		displayFolder: Funil de Vendas
+		lineageTag: 50a46ec4-9919-4b18-8a69-211af094f4ee
+
+	/// Qtd de pedidos confirmados (Limber) — conta Localizadores únicos com Status=Aprovada.
+	/// DEDUPLICAÇÃO: DISTINCTCOUNT(Localizador) evita contar múltiplas linhas do mesmo pedido.
+	measure 'Vendas Confirmadas' =
+			CALCULATE(
+			    DISTINCTCOUNT(Limber_Vendas[Localizador]),
+			    Limber_Vendas[Status] = "Aprovada"
+			)
+		formatString: #,##0
+		displayFolder: Funil de Vendas
+		lineageTag: f8178bd0-36c2-4cf1-888b-01c98c6a075f
+
+	/// Soma bruta do investimento Meta Ads sem lógica de ano. Uso interno para cálculos YoY.
+	measure '_Meta Invest Bruto' = SUM(Meta_Ads_Campanhas[spend])
+		formatString: R$ #,##0.00
+		displayFolder: Utilitários
+		lineageTag: 6576ea13-9526-43c7-869a-3a774e8483e9
+
+	/// Soma bruta do investimento Google Ads sem lógica de ano. Uso interno para cálculos YoY.
+	measure '_GA Invest Bruto' = DIVIDE(SUM(Google_Ads_Campanhas[cost_micros]), 1000000)
+		formatString: R$ #,##0.00
+		displayFolder: Utilitários
+		lineageTag: c1ce5bfd-d84d-47ad-9525-78f251164cb1
+
+	/// Investimento total Ads bruto sem lógica de ano. Uso interno para cálculos YoY.
+	measure '_Total Invest Bruto' = [_Meta Invest Bruto] + [_GA Invest Bruto]
+		formatString: R$ #,##0.00
+		displayFolder: Utilitários
+		lineageTag: 78db1c6e-4161-458a-8dd1-3e1df0a7c9dc
+
+	/// Investimento Ads no mês anterior. Compara CY vs LM.
+	measure 'Investimento Ads Mês Anterior' =
+			CALCULATE(
+			    [_Total Invest Bruto],
+			    DATEADD('01_Calendário'[Date], -1, MONTH)
+			)
+		formatString: R$ #,##0.00
+		displayFolder: Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-0001000010ab
+
+	/// Variação percentual MoM do investimento total em Ads.
+	measure 'Investimento Ads ΔMoM' =
+			VAR _atual = [Total Investimento Ads]
+			VAR _anterior = [Investimento Ads Mês Anterior]
+			RETURN DIVIDE(_atual - _anterior, _anterior)
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-0001000010ac
+
+	/// Cliques Ads no ano anterior (mesmo período).
+	measure 'Cliques Ads Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(SUM(Meta_Ads_Campanhas[clicks]) + SUM(Google_Ads_Campanhas[clicks]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: #,##0
+		displayFolder: Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-0001000010ad
+
+	/// Variação percentual YoY dos cliques totais em Ads.
+	measure 'Cliques Ads ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _atual = CALCULATE(SUM(Meta_Ads_Campanhas[clicks]) + SUM(Google_Ads_Campanhas[clicks]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _anterior = [Cliques Ads Ano Anterior]
+			RETURN DIVIDE(_atual - _anterior, _anterior)
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-0001000010ae
+
+	/// Impressões Ads no ano anterior (mesmo período).
+	measure 'Impressões Ads Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(SUM(Meta_Ads_Campanhas[impressions]) + SUM(Google_Ads_Campanhas[impressions]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: #,##0
+		displayFolder: Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-0001000010af
+
+	/// Total de conversões Ads (GA + Meta purchases). Filtrado pelo ano selecionado (ou ano corrente por padrão).
+	measure 'Total Conversões Ads' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			VAR _ga = CALCULATE(
+			    0 + SUM(Google_Ads_Campanhas[conversions]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+			VAR _meta = CALCULATE(
+			    IF(ISBLANK(SUM(Meta_Ads_Campanhas[purchases])), 0, SUM(Meta_Ads_Campanhas[purchases])),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+			RETURN _ga + _meta
+		formatString: #,##0
+		displayFolder: Tráfego Pago Consolidado
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-0001000010b1
+
+	/// Conversões Ads no ano anterior (GA + Meta Purchases).
+	measure 'Conversões Ads Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _ga = CALCULATE(0 + SUM(Google_Ads_Campanhas[conversions]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+			VAR _meta = CALCULATE(
+			    IF(ISBLANK(SUM(Meta_Ads_Campanhas[purchases])), 0, SUM(Meta_Ads_Campanhas[purchases])),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+			RETURN _ga + _meta
+		formatString: #,##0
+		displayFolder: Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-0001000010b2
+
+	/// Variação percentual YoY das conversões.
+	measure 'Conversões Ads ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _gaAtual = CALCULATE(0 + SUM(Google_Ads_Campanhas[conversions]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _metaAtual = CALCULATE(IF(ISBLANK(SUM(Meta_Ads_Campanhas[purchases])), 0, SUM(Meta_Ads_Campanhas[purchases])), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _atual = _gaAtual + _metaAtual
+			VAR _anterior = [Conversões Ads Ano Anterior]
+			RETURN DIVIDE(_atual - _anterior, _anterior)
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-0001000010b3
+
+	/// Custo por aquisição em Ads (custo / conversão). BLANK se não há conversões.
+	measure 'CPA Ads' =
+			VAR _conv = [Total Conversões Ads]
+			RETURN IF(_conv > 0, DIVIDE([Total Investimento Ads], _conv), BLANK())
+		formatString: R$ #,##0.00
+		displayFolder: Tráfego Pago Consolidado\Custo
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-0001000010b4
+
+	/// Receita estimada de conversões Google Ads.
+	measure 'Receita Conversões Ads' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			VAR _ga = CALCULATE(
+			    0 + SUM(Google_Ads_Campanhas[conversions_value]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+			VAR _meta = CALCULATE(
+			    IF(ISBLANK(SUM(Meta_Ads_Campanhas[purchase_value])), 0, SUM(Meta_Ads_Campanhas[purchase_value])),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+			RETURN _ga + _meta
+		formatString: R$ #,##0.00
+		displayFolder: Tráfego Pago Consolidado\Retorno
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-0001000010b6
+
+	/// ROAS direto Ads (receita conversão / investimento).
+	measure 'ROAS Conversão Ads' =
+			VAR _rec = [Receita Conversões Ads]
+			VAR _inv = [Total Investimento Ads]
+			RETURN IF(_rec > 0 && _inv > 0, DIVIDE(_rec, _inv), BLANK())
+		formatString: 0.00"x"
+		displayFolder: Tráfego Pago Consolidado\Retorno
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-0001000010b7
+
+	/// Receita Google Ads. Filtrado pelo ano selecionado (ou ano corrente por padrão).
+	measure 'GA Receita' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Google_Ads_Campanhas[conversions_value]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: R$ #,##0.00
+		displayFolder: Google Ads\Retorno
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-GA0000000001
+
+	/// ROAS Google Ads.
+	measure 'GA ROAS' =
+			VAR _rec = [GA Receita]
+			VAR _inv = [GA Investimento]
+			RETURN IF(_rec > 0 && _inv > 0, DIVIDE(_rec, _inv), BLANK())
+		formatString: 0.00"x"
+		displayFolder: Google Ads\Retorno
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-GA0000000002
+
+	/// Custo por aquisição Google Ads.
+	measure 'GA CPA' =
+			VAR _conv = [GA Conversões]
+			RETURN IF(_conv > 0, DIVIDE([GA Investimento], _conv), BLANK())
+		formatString: R$ #,##0.00
+		displayFolder: Google Ads\Custo
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-GA0000000003
+
+	/// Investimento Google Ads no ano anterior (mesmo período).
+	measure 'GA Invest Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE([_GA Invest Bruto], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: R$ #,##0.00
+		displayFolder: Google Ads\Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-GA0000000004
+
+	/// Variação YoY do investimento Google Ads.
+	measure 'GA Investimento ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _cy = CALCULATE([_GA Invest Bruto], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = [GA Invest Ano Anterior]
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), 0)
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Google Ads\Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-GA0000000005
+
+	/// Cliques Google Ads no ano anterior.
+	measure 'GA Cliques Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(SUM(Google_Ads_Campanhas[clicks]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: #,##0
+		displayFolder: Google Ads\Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-GA0000000006
+
+	/// Conversões Google Ads no ano anterior.
+	measure 'GA Conversões Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(SUM(Google_Ads_Campanhas[conversions]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: #,##0
+		displayFolder: Google Ads\Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-GA0000000008
+
+	/// Variação YoY de conversões Google Ads.
+	measure 'GA Conversões ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _cy = CALCULATE(SUM(Google_Ads_Campanhas[conversions]) + 0, REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = [GA Conversões Ano Anterior]
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), 0)
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Google Ads\Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-GA0000000009
+
+	/// Receita Google Ads no ano anterior.
+	measure 'GA Receita Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(SUM(Google_Ads_Campanhas[conversions_value]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: R$ #,##0.00
+		displayFolder: Google Ads\Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-GA0000000010
+
+	/// Variação YoY da receita Google Ads.
+	measure 'GA Receita ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _cy = CALCULATE(0 + SUM(Google_Ads_Campanhas[conversions_value]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = [GA Receita Ano Anterior]
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), 0)
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Google Ads\Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-GA0000000011
+
+	/// ROAS Google Ads do mês anterior.
+	measure 'GA ROAS Mês Anterior' =
+			VAR _spend = CALCULATE(DIVIDE(SUM(Google_Ads_Campanhas[cost_micros]), 1000000), DATEADD('01_Calendário'[Date], -1, MONTH))
+			VAR _rev = CALCULATE(SUM(Google_Ads_Campanhas[conversions_value]), DATEADD('01_Calendário'[Date], -1, MONTH))
+			RETURN DIVIDE(_rev, _spend)
+		formatString: 0.00
+		displayFolder: Google Ads\Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-GA0000000012
+
+	/// Investimento Meta no ano anterior (mesmo período).
+	measure 'Meta Invest Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE([_Meta Invest Bruto], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: R$ #,##0.00
+		displayFolder: Meta Ads\Comparativos
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000001
+
+	/// Variação YoY do investimento Meta.
+	measure 'Meta Investimento ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _cy = CALCULATE([_Meta Invest Bruto], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = [Meta Invest Ano Anterior]
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), 0)
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Meta Ads\Comparativos
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000002
+
+	/// Cliques Meta no ano anterior.
+	measure 'Meta Cliques Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(SUM(Meta_Ads_Campanhas[clicks]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: #,##0
+		displayFolder: Meta Ads\Comparativos
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000003
+
+	/// Impressões Meta no ano anterior.
+	measure 'Meta Impressões Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(SUM(Meta_Ads_Campanhas[impressions]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: #,##0
+		displayFolder: Meta Ads\Comparativos
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000005
+
+	/// Alcance Meta no ano anterior.
+	measure 'Meta Alcance Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(SUM(Meta_Ads_Campanhas[reach]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: #,##0
+		displayFolder: Meta Ads\Comparativos
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000007
+
+	/// Investimento Meta no mês anterior.
+	measure 'Meta Investimento Mês Anterior' = CALCULATE(SUM(Meta_Ads_Campanhas[spend]), DATEADD('01_Calendário'[Date], -1, MONTH))
+		formatString: R$ #,##0.00
+		displayFolder: Meta Ads\Comparativos
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000009
+
+	/// FB Engajamento ano anterior.
+	measure 'FB Engajamento Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_FB[valor]),
+			    Meta_Organico_FB[metrica] = "page_post_engagements",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+		formatString: #,##0
+		displayFolder: Orgânico FB\Comparativos
+		lineageTag: 7700aaaa-bbbb-cccc-dddd-FB0000000001
+
+	/// Delta YoY de Engajamento FB — mesmo período (YTD vs YTD).
+	measure 'FB Engajamento ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			VAR _cy = CALCULATE(SUM(Meta_Organico_FB[valor]), Meta_Organico_FB[metrica] = "page_post_engagements", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = CALCULATE(SUM(Meta_Organico_FB[valor]), Meta_Organico_FB[metrica] = "page_post_engagements", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Orgânico FB
+		lineageTag: 5500aaaa-bbbb-cccc-dddd-FB0000000011
+
+	/// FB Alcance Único ano anterior.
+	measure 'FB Alcance Único Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_FB[valor]),
+			    Meta_Organico_FB[metrica] = "page_impressions_unique",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+		formatString: #,##0
+		displayFolder: Orgânico FB\Comparativos
+		lineageTag: 7700aaaa-bbbb-cccc-dddd-FB0000000003
+
+	/// Delta YoY de Alcance Único FB — mesmo período (YTD vs YTD).
+	measure 'FB Alcance Único ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			VAR _cy = CALCULATE(SUM(Meta_Organico_FB[valor]), Meta_Organico_FB[metrica] = "page_impressions_unique", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = CALCULATE(SUM(Meta_Organico_FB[valor]), Meta_Organico_FB[metrica] = "page_impressions_unique", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Orgânico FB
+		lineageTag: 5500aaaa-bbbb-cccc-dddd-FB0000000010
+
+	/// IG Alcance ano anterior.
+	measure 'IG Alcance Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_IG[valor]),
+			    Meta_Organico_IG[metrica] = "reach",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+		formatString: #,##0
+		displayFolder: Orgânico IG\Comparativos
+		lineageTag: 7700aaaa-bbbb-cccc-dddd-IG0000000001
+
+	/// Delta YoY de Alcance IG — mesmo período (YTD vs YTD).
+	measure 'IG Alcance ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			VAR _cy = CALCULATE(SUM(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "reach", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = CALCULATE(SUM(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "reach", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Orgânico IG
+		lineageTag: 7700aaaa-bbbb-cccc-dddd-IG0000000020
+
+	/// IG Interações Ano Anterior — total_interactions do mesmo período YTD do ano anterior.
+	measure 'IG Interações Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_IG[valor]),
+			    Meta_Organico_IG[metrica] = "total_interactions",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1,
+			    '01_Calendário'[MêsNúmero] <= _mesMax
+			)
+		formatString: #,##0
+		displayFolder: Orgânico IG\Comparativos
+		lineageTag: 7700aaaa-bbbb-cccc-dddd-IG0000000003
+
+	measure 'Receita Ingressos' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[ValorUnitario]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    NOT Limber_Vendas[Categoria] IN {"Aluguel de Boia - LOCAL", "Aluguel de Armários", "Pó Colorido"},
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: R$ #,##0.00
+		displayFolder: E-commerce
+		lineageTag: ec000001-1111-2222-3333-ECOMM000001
+
+	/// Receita Limber no ano anterior (YoY).
+	measure 'Receita Limber Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE([Receita Limber], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: R$ #,##0.00
+		displayFolder: Funil de Vendas\Limber
+		lineageTag: lb100009-1111-2222-3333-LIMBER010009
+
+	/// Formato compacto de número grande (R$ 12,5 Mil / R$ 1,2 Mi)
+	measure _FmtBR = ""
+		displayFolder: HTML Dashboard\Helpers
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000001
+
+	/// Investimento total formatado tipo R$ 24,69 Mil
+	measure '_Invest BR' =
+			VAR _v = [Total Investimento Ads]
+			VAR _abs = ABS(_v)
+			RETURN
+			SWITCH(TRUE(),
+			    _abs >= 1000000, "R$ " & FORMAT(_v/1000000, "0.00") & " Mi",
+			    _abs >= 1000, "R$ " & FORMAT(_v/1000, "0.0") & " Mil",
+			    "R$ " & FORMAT(_v, "0.00")
+			)
+		displayFolder: HTML Dashboard\Formatadas
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000002
+
+	/// Cliques total formatado (155 Mil / 2,3 Mi)
+	measure '_Cliques BR' =
+			VAR _v = [Total Cliques Ads]
+			RETURN
+			SWITCH(TRUE(),
+			    _v >= 1000000, FORMAT(_v/1000000, "0.0") & " Mi",
+			    _v >= 1000, FORMAT(_v/1000, "0") & " Mil",
+			    FORMAT(_v, "0")
+			)
+		displayFolder: HTML Dashboard\Formatadas
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000003
+
+	/// Impressões total formatadas
+	measure '_Imp BR' =
+			VAR _v = [Total Impressões Ads]
+			RETURN
+			SWITCH(TRUE(),
+			    _v >= 1000000, FORMAT(_v/1000000, "0.0") & " Mi",
+			    _v >= 1000, FORMAT(_v/1000, "0") & " Mil",
+			    FORMAT(_v, "0")
+			)
+		displayFolder: HTML Dashboard\Formatadas
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000004
+
+	/// Conversões formatadas
+	measure '_Conv BR' = FORMAT([Total Conversões Ads], "#,##0")
+		displayFolder: HTML Dashboard\Formatadas
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000005
+
+	/// Receita formatada (R$ 206 Mil / R$ 1,2 Mi)
+	measure '_Receita BR' =
+			VAR _v = [Receita Conversões Ads]
+			RETURN
+			SWITCH(TRUE(),
+			    _v >= 1000000, "R$ " & FORMAT(_v/1000000, "0.00") & " Mi",
+			    _v >= 1000, "R$ " & FORMAT(_v/1000, "0.0") & " Mil",
+			    "R$ " & FORMAT(_v, "0.00")
+			)
+		displayFolder: HTML Dashboard\Formatadas
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000006
+
+	/// ROAS Consolidado formatado (8.37x)
+	measure '_ROAS BR' =
+			VAR _v = [ROAS Conversão Ads]
+			RETURN IF(_v > 0, FORMAT(_v, "0.00") & "x", "—")
+		displayFolder: HTML Dashboard\Formatadas
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000007
+
+	/// CTR formatado
+	measure '_CTR BR' = FORMAT([CTR Consolidado], "0.00%")
+		displayFolder: HTML Dashboard\Formatadas
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000008
+
+	/// CPC formatado
+	measure '_CPC BR' = "R$ " & FORMAT([CPC Consolidado], "0.00")
+		displayFolder: HTML Dashboard\Formatadas
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000009
+
+	/// CPA formatado
+	measure '_CPA BR' =
+			VAR _v = [CPA Ads]
+			RETURN IF(_v > 0, "R$ " & FORMAT(_v, "0.00"), "—")
+		displayFolder: HTML Dashboard\Formatadas
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000010
+
+	/// Delta YoY Investimento formatado com sinal e cor
+	measure '_DInvestYoY BR' =
+			VAR _d = [Investimento Ads ΔYoY]
+			RETURN
+			IF(_d = 0, "0,0%",
+			   IF(_d > 0, "+" & FORMAT(_d, "0.0%"), FORMAT(_d, "0.0%")))
+		displayFolder: HTML Dashboard\Formatadas
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000011
+
+	/// Delta YoY Conversões
+	measure '_DConvYoY BR' =
+			VAR _d = [Conversões Ads ΔYoY]
+			RETURN
+			IF(_d = 0, "0,0%",
+			   IF(_d > 0, "+" & FORMAT(_d, "0.0%"), FORMAT(_d, "0.0%")))
+		displayFolder: HTML Dashboard\Formatadas
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000013
+
+	/// Delta MoM Investimento
+	measure '_DInvestMoM BR' =
+			VAR _d = [Investimento Ads ΔMoM]
+			RETURN
+			IF(_d = 0, "0,0%",
+			   IF(_d > 0, "+" & FORMAT(_d, "0.0%"), FORMAT(_d, "0.0%")))
+		displayFolder: HTML Dashboard\Formatadas
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000014
+
+	/// Cor para delta (verde se positivo, vermelho se negativo)
+	measure '_DColor Invest YoY' = IF([Investimento Ads ΔYoY] >= 0, "#22c55e", "#ef4444")
+		displayFolder: HTML Dashboard\Cores
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000015
+
+	measure '_DColor Conv YoY' = IF([Conversões Ads ΔYoY] >= 0, "#22c55e", "#ef4444")
+		displayFolder: HTML Dashboard\Cores
+		lineageTag: 99990001-aaaa-bbbb-cccc-000000000017
+
+	/// ═══════════════════════════════════════════════════════════
+	/// CHART V9 GRANDE — Spend vs Revenue 12 meses (largura inteira)
+	/// ═══════════════════════════════════════════════════════════
+	measure '_Chart Big Spend Revenue V9' =
+			VAR _ano = MAX('01_Calendário'[Ano])
+			VAR _tbl =
+			    CALCULATETABLE(
+			        ADDCOLUMNS(VALUES('01_Calendário'[Mês]),
+			            "MesNum", CALCULATE(MAX('01_Calendário'[MêsNúmero])),
+			            "Spend", COALESCE([Total Investimento Ads], 0),
+			            "Rev", COALESCE([Receita Conversões Ads], 0),
+			            "Roas", COALESCE([ROAS Conversão Ads], 0)),
+			        '01_Calendário'[Ano] = _ano
+			    )
+			VAR _maxBar = MAXX(_tbl, [Spend])
+			VAR _maxLine = MAXX(_tbl, [Rev])
+			VAR _maxBarSafe = IF(_maxBar <= 0, 1, _maxBar)
+			VAR _maxLineSafe = IF(_maxLine <= 0, 1, _maxLine)
+			VAR _w = 800
+			VAR _h = 270
+			VAR _xLeft = 60
+			VAR _xRight = 60
+			VAR _bw = 38
+			VAR _step = (_w - _xLeft - _xRight) / 12
+			VAR _baseY = 220
+			VAR _topY = 30
+			VAR _bars =
+			    CONCATENATEX(_tbl,
+			        VAR _x = _xLeft + ([MesNum] - 1) * _step + (_step - _bw) / 2
+			        VAR _hSpend = DIVIDE([Spend], _maxBarSafe) * (_baseY - _topY)
+			        VAR _y = _baseY - _hSpend
+			        VAR _label = SWITCH(TRUE(),
+			            [Spend] >= 1000000, "R$" & FORMAT([Spend]/1000000, "0.0") & "M",
+			            [Spend] >= 1000, "R$" & FORMAT([Spend]/1000, "0") & "K",
+			            "R$" & FORMAT([Spend], "0"))
+			VAR _roasLbl = IF([Roas] > 0, FORMAT([Roas], "0.0") & "x", "")
+			VAR _roasColor = SWITCH(TRUE(), [Roas] >= 5, "#22c55e", [Roas] >= 3, "#FBBF24", [Roas] > 0, "#ef4444", "#94A3B8")
+			        RETURN
+			        "<rect x='" & FORMAT(_x, "0") & "' y='" & FORMAT(_y, "0") & "' width='" & _bw & "' height='" & FORMAT(_hSpend, "0") & "' fill='#E05A00' rx='3'/>" &
+			        IF(_hSpend > 22, "<text x='" & FORMAT(_x + _bw/2, "0") & "' y='" & FORMAT(_y + 14, "0") & "' text-anchor='middle' font-size='11' font-weight='bold' fill='#fff'>" & _label & "</text>", "<text x='" & FORMAT(_x + _bw/2, "0") & "' y='" & FORMAT(_y - 6, "0") & "' text-anchor='middle' font-size='10' fill='#FED7AA' font-weight='bold'>" & _label & "</text>") &
+			        "<text x='" & FORMAT(_x + _bw/2, "0") & "' y='" & FORMAT(_baseY + 16, "0") & "' text-anchor='middle' font-size='11' fill='#cbd5e1' font-weight='bold'>" & UPPER(LEFT('01_Calendário'[Mês], 3)) & "</text>" &
+			        IF([Roas] > 0, "<text x='" & FORMAT(_x + _bw/2, "0") & "' y='" & FORMAT(_baseY + 30, "0") & "' text-anchor='middle' font-size='10' fill='" & _roasColor & "' font-weight='bold'>" & _roasLbl & "</text>", ""),
+			        "", [MesNum], ASC)
+			VAR _line_pts =
+			    CONCATENATEX(_tbl,
+			        VAR _x = _xLeft + ([MesNum] - 1) * _step + _step/2
+			        VAR _y = _baseY - DIVIDE([Rev], _maxLineSafe) * (_baseY - _topY)
+			        RETURN FORMAT(_x, "0") & "," & FORMAT(_y, "0"),
+			        " ", [MesNum], ASC)
+			VAR _line_dots =
+			    CONCATENATEX(_tbl,
+			        VAR _x = _xLeft + ([MesNum] - 1) * _step + _step/2
+			        VAR _y = _baseY - DIVIDE([Rev], _maxLineSafe) * (_baseY - _topY)
+			        VAR _vlbl = SWITCH(TRUE(),
+			            [Rev] >= 1000000, "R$" & FORMAT([Rev]/1000000, "0.0") & "M",
+			            [Rev] >= 1000, "R$" & FORMAT([Rev]/1000, "0") & "K",
+			            "")
+			        RETURN
+			        "<circle cx='" & FORMAT(_x, "0") & "' cy='" & FORMAT(_y, "0") & "' r='5' fill='#22c55e' stroke='#0D1117' stroke-width='2'/>" &
+			        IF([Rev] > 0, "<text x='" & FORMAT(_x, "0") & "' y='" & FORMAT(_y - 10, "0") & "' text-anchor='middle' font-size='10' font-weight='bold' fill='#22c55e'>" & _vlbl & "</text>", ""),
+			        "", [MesNum], ASC)
+			VAR _eixoY =
+			    "<text x='55' y='" & FORMAT(_topY + 4, "0") & "' text-anchor='end' font-size='10' fill='#94A3B8'>" & SWITCH(TRUE(), _maxBar >= 1000000, FORMAT(_maxBar/1000000, "0.0") & "M", FORMAT(_maxBar/1000, "0") & "K") & "</text>" &
+			    "<text x='55' y='" & FORMAT((_topY + _baseY)/2 + 4, "0") & "' text-anchor='end' font-size='10' fill='#94A3B8'>" & SWITCH(TRUE(), _maxBar >= 1000000, FORMAT(_maxBar/2000000, "0.0") & "M", FORMAT(_maxBar/2000, "0") & "K") & "</text>" &
+			    "<text x='55' y='" & FORMAT(_baseY + 4, "0") & "' text-anchor='end' font-size='10' fill='#94A3B8'>0</text>"
+			RETURN
+			"<svg width='100%' height='" & _h & "' viewBox='0 0 " & _w & " " & _h & "' preserveAspectRatio='xMidYMid meet' xmlns='http://www.w3.org/2000/svg'>" &
+			"<line x1='58' y1='" & FORMAT(_topY, "0") & "' x2='" & FORMAT(_w - 10, "0") & "' y2='" & FORMAT(_topY, "0") & "' stroke='#1F2937' stroke-width='1' stroke-dasharray='2,2'/>" &
+			"<line x1='58' y1='" & FORMAT((_topY + _baseY)/2, "0") & "' x2='" & FORMAT(_w - 10, "0") & "' y2='" & FORMAT((_topY + _baseY)/2, "0") & "' stroke='#1F2937' stroke-width='1' stroke-dasharray='2,2'/>" &
+			"<line x1='58' y1='" & FORMAT(_baseY, "0") & "' x2='" & FORMAT(_w - 10, "0") & "' y2='" & FORMAT(_baseY, "0") & "' stroke='#94A3B8' stroke-width='1.5'/>" &
+			_eixoY &
+			_bars &
+			"<polyline points='" & _line_pts & "' fill='none' stroke='#22c55e' stroke-width='2.5' stroke-linejoin='round'/>" &
+			_line_dots &
+			"</svg>"
+		displayFolder: HTML Dashboard\SVG
+		lineageTag: 12345678-1111-2222-3333-BIGSPNDREV01
+
+	/// ═══════════════════════════════════════════════════════════
+	/// DONUT MIX CANAL V9 grande
+	/// ═══════════════════════════════════════════════════════════
+	measure '_HTML Donut Canal V9' =
+			VAR _meta = [Meta Investimento Total]
+			VAR _ga = [GA Investimento]
+			VAR _tot = _meta + _ga
+			VAR _pctMeta = DIVIDE(_meta, _tot)
+			VAR _pctGA = DIVIDE(_ga, _tot)
+			VAR _ang = _pctMeta * 360
+			VAR _rad = (_ang - 90) * PI() / 180
+			VAR _cx = 95
+			VAR _cy = 95
+			VAR _r = 75
+			VAR _x = _cx + _r * COS(_rad)
+			VAR _y = _cy + _r * SIN(_rad)
+			VAR _largeArc = IF(_ang > 180, 1, 0)
+			RETURN
+			"<svg width='190' height='190' viewBox='0 0 190 190' xmlns='http://www.w3.org/2000/svg' style='display:block;margin:0 auto;'>" &
+			"<circle cx='95' cy='95' r='75' fill='none' stroke='#4285F4' stroke-width='32'/>" &
+			"<path d='M 95 20 A 75 75 0 " & _largeArc & " 1 " & FORMAT(_x,"0.0") & " " & FORMAT(_y,"0.0") & " L 95 95 Z' fill='#1877F2'/>" &
+			"<circle cx='95' cy='95' r='52' fill='#161B22'/>" &
+			"<text x='95' y='90' text-anchor='middle' fill='#fff' font-size='22' font-weight='bold'>R$" & FORMAT(_tot/1000, "#,##0") & "K</text>" &
+			"<text x='95' y='108' text-anchor='middle' fill='#94A3B8' font-size='10'>Total invest</text>" &
+			"</svg>" &
+			"<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;font-family:Segoe UI;'>" &
+			"<div style='background:#1F2937;border-left:3px solid #1877F2;padding:6px 10px;border-radius:4px;'><div style='color:#1877F2;font-size:9px;font-weight:bold;'>META</div><div style='color:#fff;font-size:14px;font-weight:bold;'>" & FORMAT(_pctMeta, "0%") & "</div><div style='color:#94A3B8;font-size:10px;'>R$ " & FORMAT(_meta/1000, "#,##0") & "K</div></div>" &
+			"<div style='background:#1F2937;border-left:3px solid #4285F4;padding:6px 10px;border-radius:4px;'><div style='color:#4285F4;font-size:9px;font-weight:bold;'>GOOGLE</div><div style='color:#fff;font-size:14px;font-weight:bold;'>" & FORMAT(_pctGA, "0%") & "</div><div style='color:#94A3B8;font-size:10px;'>R$ " & FORMAT(_ga/1000, "#,##0") & "K</div></div>" &
+			"</div>"
+		displayFolder: HTML Dashboard\Componentes
+		lineageTag: 12345678-1111-2222-3333-DONUTV900001
+
+	/// ═══════════════════════════════════════════════════════════
+	/// MINI-FUNIL HORIZONTAL V10 — compacto com taxas
+	/// ═══════════════════════════════════════════════════════════
+	measure '_HTML Mini Funil V10' =
+			VAR _imp = [Total Impressões Ads]
+			VAR _cli = [Total Cliques Ads]
+			VAR _conv = [Total Conversões Ads]
+			VAR _ctr = DIVIDE(_cli, _imp)
+			VAR _cr = DIVIDE(_conv, _cli)
+			RETURN
+			"<div style='display:flex;align-items:center;gap:6px;font-family:Segoe UI;font-size:10px;'>" &
+			"<div style='flex:1;text-align:center;background:#E05A00;color:#fff;padding:6px;border-radius:4px;'><div style='font-size:13px;font-weight:bold;'>" & [_Imp BR] & "</div><div style='font-size:8px;opacity:0.85;'>IMPRESSÕES</div></div>" &
+			"<div style='color:#FBBF24;font-weight:bold;font-size:10px;'>→ " & FORMAT(_ctr, "0.0%") & "</div>" &
+			"<div style='flex:1;text-align:center;background:#22d3ee;color:#0D1117;padding:6px;border-radius:4px;'><div style='font-size:13px;font-weight:bold;'>" & [_Cliques BR] & "</div><div style='font-size:8px;opacity:0.85;'>CLIQUES</div></div>" &
+			"<div style='color:#FBBF24;font-weight:bold;font-size:10px;'>→ " & FORMAT(_cr, "0.0%") & "</div>" &
+			"<div style='flex:1;text-align:center;background:#a78bfa;color:#fff;padding:6px;border-radius:4px;'><div style='font-size:13px;font-weight:bold;'>" & [_Conv BR] & "</div><div style='font-size:8px;opacity:0.85;'>CONVERSÕES</div></div>" &
+			"<div style='color:#22c55e;font-weight:bold;font-size:10px;'>→ " & [_ROAS BR] & "</div>" &
+			"<div style='flex:1;text-align:center;background:#22c55e;color:#fff;padding:6px;border-radius:4px;'><div style='font-size:13px;font-weight:bold;'>" & [_Receita BR] & "</div><div style='font-size:8px;opacity:0.85;'>RECEITA</div></div>" &
+			"</div>"
+		displayFolder: HTML Dashboard\Componentes
+		lineageTag: aabbccdd-1111-2222-3333-FUNILV1000001
+
+	/// ═══════════════════════════════════════════════════════════
+	/// FORMATADAS GOOGLE ADS — strings BR para HTML
+	/// ═══════════════════════════════════════════════════════════
+	measure '_GA Invest BR' =
+			VAR _v = [GA Investimento]
+			RETURN SWITCH(TRUE(),
+			    _v >= 1000000, "R$ " & FORMAT(_v/1000000, "0.00") & " Mi",
+			    _v >= 1000, "R$ " & FORMAT(_v/1000, "0.0") & " Mil",
+			    "R$ " & FORMAT(_v, "0.00"))
+		displayFolder: HTML Dashboard\GA Formatadas
+		lineageTag: gaaa0001-1111-2222-3333-INVBRAA00001
+
+	measure '_GA Receita BR' =
+			VAR _v = [GA Receita]
+			RETURN SWITCH(TRUE(),
+			    _v >= 1000000, "R$ " & FORMAT(_v/1000000, "0.00") & " Mi",
+			    _v >= 1000, "R$ " & FORMAT(_v/1000, "0.0") & " Mil",
+			    "R$ " & FORMAT(_v, "0.00"))
+		displayFolder: HTML Dashboard\GA Formatadas
+		lineageTag: gaaa0001-1111-2222-3333-RECBRAA00001
+
+	measure '_GA Conv BR' = FORMAT([GA Conversões], "#,##0")
+		displayFolder: HTML Dashboard\GA Formatadas
+		lineageTag: gaaa0001-1111-2222-3333-CONVBRAA0001
+
+	measure '_GA ROAS BR' =
+			VAR _v = [GA ROAS]
+			RETURN IF(_v > 0, FORMAT(_v, "0.00") & "x", "—")
+		displayFolder: HTML Dashboard\GA Formatadas
+		lineageTag: gaaa0001-1111-2222-3333-ROASBRAA0001
+
+	measure '_GA Imp BR' =
+			VAR _v = [GA Impressões]
+			RETURN SWITCH(TRUE(),
+			    _v >= 1000000, FORMAT(_v/1000000, "0.0") & " Mi",
+			    _v >= 1000, FORMAT(_v/1000, "0") & " Mil",
+			    FORMAT(_v, "0"))
+		displayFolder: HTML Dashboard\GA Formatadas
+		lineageTag: gaaa0001-1111-2222-3333-IMPBRAA00001
+
+	measure '_GA Cliques BR' =
+			VAR _v = [GA Cliques]
+			RETURN SWITCH(TRUE(),
+			    _v >= 1000000, FORMAT(_v/1000000, "0.0") & " Mi",
+			    _v >= 1000, FORMAT(_v/1000, "0") & " Mil",
+			    FORMAT(_v, "0"))
+		displayFolder: HTML Dashboard\GA Formatadas
+		lineageTag: gaaa0001-1111-2222-3333-CLKBRAA00001
+
+	measure '_GA CPC BR' = "R$ " & FORMAT([GA CPC], "0.00")
+		displayFolder: HTML Dashboard\GA Formatadas
+		lineageTag: gaaa0001-1111-2222-3333-CPCBRAA00001
+
+	measure '_GA CPM BR' = "R$ " & FORMAT([GA CPM], "0.00")
+		displayFolder: HTML Dashboard\GA Formatadas
+		lineageTag: gaaa0001-1111-2222-3333-CPMBRAA00001
+
+	measure '_GA CPA BR' =
+			VAR _v = [GA CPA]
+			RETURN IF(_v > 0, "R$ " & FORMAT(_v, "0.00"), "—")
+		displayFolder: HTML Dashboard\GA Formatadas
+		lineageTag: gaaa0001-1111-2222-3333-CPABRAA00001
+
+	measure '_GA CTR BR' = FORMAT([GA CTR], "0.00%")
+		displayFolder: HTML Dashboard\GA Formatadas
+		lineageTag: gaaa0001-1111-2222-3333-CTRBRAA00001
+
+	/// ═══════════════════════════════════════════════════════════
+	/// CHART V1 GA — Spend vs Revenue 12 meses (largura inteira)
+	/// ═══════════════════════════════════════════════════════════
+	measure '_HTML GA Big Spend Revenue' =
+			VAR _ano = MAX('01_Calendário'[Ano])
+			VAR _tbl =
+			    CALCULATETABLE(
+			        ADDCOLUMNS(VALUES('01_Calendário'[Mês]),
+			            "MesNum", CALCULATE(MAX('01_Calendário'[MêsNúmero])),
+			            "Spend", COALESCE([GA Investimento], 0),
+			            "Rev", COALESCE([GA Receita], 0),
+			            "Roas", COALESCE([GA ROAS], 0)),
+			        '01_Calendário'[Ano] = _ano
+			    )
+			VAR _maxBar = MAXX(_tbl, [Spend])
+			VAR _maxLine = MAXX(_tbl, [Rev])
+			VAR _maxBarSafe = IF(_maxBar <= 0, 1, _maxBar)
+			VAR _maxLineSafe = IF(_maxLine <= 0, 1, _maxLine)
+			VAR _w = 800
+			VAR _h = 270
+			VAR _xLeft = 60
+			VAR _xRight = 60
+			VAR _bw = 38
+			VAR _step = (_w - _xLeft - _xRight) / 12
+			VAR _baseY = 220
+			VAR _topY = 30
+			VAR _bars =
+			    CONCATENATEX(_tbl,
+			        VAR _x = _xLeft + ([MesNum] - 1) * _step + (_step - _bw) / 2
+			        VAR _hSpend = MAX(0, DIVIDE([Spend], _maxBarSafe) * (_baseY - _topY))
+			        VAR _y = _baseY - _hSpend
+			        VAR _label = SWITCH(TRUE(),
+			            [Spend] >= 1000000, "R$" & FORMAT([Spend]/1000000, "0.0") & "M",
+			            [Spend] >= 1000, "R$" & FORMAT([Spend]/1000, "0") & "K",
+			            "R$" & FORMAT([Spend], "0"))
+			VAR _roasLbl = IF([Roas] > 0, FORMAT([Roas], "0.0") & "x", "")
+			VAR _roasColor = SWITCH(TRUE(), [Roas] >= 5, "#22C55E", [Roas] >= 3, "#EAB308", [Roas] > 0, "#EF4444", "#8B949E")
+			        RETURN
+			        "<rect x='" & FORMAT(_x, "0") & "' y='" & FORMAT(_y, "0") & "' width='" & _bw & "' height='" & FORMAT(_hSpend, "0") & "' fill='#4285F4' rx='3'/>" &
+			        IF(_hSpend > 22, "<text x='" & FORMAT(_x + _bw/2, "0") & "' y='" & FORMAT(_y + 14, "0") & "' text-anchor='middle' font-size='11' font-weight='bold' fill='#fff'>" & _label & "</text>", "<text x='" & FORMAT(_x + _bw/2, "0") & "' y='" & FORMAT(_y - 6, "0") & "' text-anchor='middle' font-size='10' fill='#BFDBFE' font-weight='bold'>" & _label & "</text>") &
+			        "<text x='" & FORMAT(_x + _bw/2, "0") & "' y='" & FORMAT(_baseY + 16, "0") & "' text-anchor='middle' font-size='11' fill='#E6EDF3' font-weight='bold'>" & UPPER(LEFT('01_Calendário'[Mês], 3)) & "</text>" &
+			        IF([Roas] > 0, "<text x='" & FORMAT(_x + _bw/2, "0") & "' y='" & FORMAT(_baseY + 30, "0") & "' text-anchor='middle' font-size='10' fill='" & _roasColor & "' font-weight='bold'>" & _roasLbl & "</text>", ""),
+			        "", [MesNum], ASC)
+			VAR _line_pts =
+			    CONCATENATEX(_tbl,
+			        VAR _x = _xLeft + ([MesNum] - 1) * _step + _step/2
+			        VAR _y = _baseY - DIVIDE([Rev], _maxLineSafe) * (_baseY - _topY)
+			        RETURN FORMAT(_x, "0") & "," & FORMAT(_y, "0"),
+			        " ", [MesNum], ASC)
+			VAR _line_dots =
+			    CONCATENATEX(_tbl,
+			        VAR _x = _xLeft + ([MesNum] - 1) * _step + _step/2
+			        VAR _y = _baseY - DIVIDE([Rev], _maxLineSafe) * (_baseY - _topY)
+			        VAR _vlbl = SWITCH(TRUE(),
+			            [Rev] >= 1000000, "R$" & FORMAT([Rev]/1000000, "0.0") & "M",
+			            [Rev] >= 1000, "R$" & FORMAT([Rev]/1000, "0") & "K",
+			            "")
+			        RETURN
+			        "<circle cx='" & FORMAT(_x, "0") & "' cy='" & FORMAT(_y, "0") & "' r='5' fill='#22C55E' stroke='#0D1117' stroke-width='2'/>" &
+			        IF([Rev] > 0, "<text x='" & FORMAT(_x, "0") & "' y='" & FORMAT(_y - 10, "0") & "' text-anchor='middle' font-size='10' font-weight='bold' fill='#22C55E'>" & _vlbl & "</text>", ""),
+			        "", [MesNum], ASC)
+			VAR _eixoY =
+			    "<text x='55' y='" & FORMAT(_topY + 4, "0") & "' text-anchor='end' font-size='10' fill='#8B949E'>" & SWITCH(TRUE(), _maxBar >= 1000000, FORMAT(_maxBar/1000000, "0.0") & "M", FORMAT(_maxBar/1000, "0") & "K") & "</text>" &
+			    "<text x='55' y='" & FORMAT((_topY + _baseY)/2 + 4, "0") & "' text-anchor='end' font-size='10' fill='#8B949E'>" & SWITCH(TRUE(), _maxBar >= 1000000, FORMAT(_maxBar/2000000, "0.0") & "M", FORMAT(_maxBar/2000, "0") & "K") & "</text>" &
+			    "<text x='55' y='" & FORMAT(_baseY + 4, "0") & "' text-anchor='end' font-size='10' fill='#8B949E'>0</text>"
+			RETURN
+			IF(ISBLANK([GA Investimento]), "",
+			"<svg width='100%' height='" & _h & "' viewBox='0 0 " & _w & " " & _h & "' preserveAspectRatio='xMidYMid meet' xmlns='http://www.w3.org/2000/svg'>" &
+			"<line x1='58' y1='" & FORMAT(_topY, "0") & "' x2='" & FORMAT(_w - 10, "0") & "' y2='" & FORMAT(_topY, "0") & "' stroke='#30363D' stroke-width='1' stroke-dasharray='2,2'/>" &
+			"<line x1='58' y1='" & FORMAT((_topY + _baseY)/2, "0") & "' x2='" & FORMAT(_w - 10, "0") & "' y2='" & FORMAT((_topY + _baseY)/2, "0") & "' stroke='#30363D' stroke-width='1' stroke-dasharray='2,2'/>" &
+			"<line x1='58' y1='" & FORMAT(_baseY, "0") & "' x2='" & FORMAT(_w - 10, "0") & "' y2='" & FORMAT(_baseY, "0") & "' stroke='#8B949E' stroke-width='1.5'/>" &
+			_eixoY &
+			_bars &
+			"<polyline points='" & _line_pts & "' fill='none' stroke='#22C55E' stroke-width='2.5' stroke-linejoin='round'/>" &
+			_line_dots &
+			"</svg>")
+		displayFolder: HTML Dashboard\GA SVG
+		lineageTag: gabb0001-1111-2222-3333-CHARTGA00001
+
+	/// ═══════════════════════════════════════════════════════════
+	/// DONUT GA — Status ENABLED vs PAUSED (% invest)
+	/// ═══════════════════════════════════════════════════════════
+	measure '_HTML GA Donut Status' =
+			VAR _enabled = CALCULATE([GA Investimento], Google_Ads_Campanhas[campaign_status] = "ENABLED")
+			VAR _paused = CALCULATE([GA Investimento], Google_Ads_Campanhas[campaign_status] = "PAUSED")
+			VAR _tot = _enabled + _paused
+			VAR _pctEn = DIVIDE(_enabled, _tot)
+			VAR _pctPa = DIVIDE(_paused, _tot)
+			VAR _ang = _pctEn * 360
+			VAR _rad = (_ang - 90) * 3.14159265358979 / 180
+			VAR _x = 95 + 75 * COS(_rad)
+			VAR _y = 95 + 75 * SIN(_rad)
+			VAR _largeArc = IF(_ang > 180, 1, 0)
+			VAR _donutPath =
+			    SWITCH(TRUE(),
+			        _pctEn >= 0.999, "<circle cx='95' cy='95' r='75' fill='#22C55E'/>",
+			        _pctEn <= 0.001, "<circle cx='95' cy='95' r='75' fill='#8B949E'/>",
+			        "<circle cx='95' cy='95' r='75' fill='none' stroke='#8B949E' stroke-width='32'/>" &
+			        "<path d='M 95 20 A 75 75 0 " & _largeArc & " 1 " & FORMAT(_x,"0.0") & " " & FORMAT(_y,"0.0") & " L 95 95 Z' fill='#22C55E'/>"
+			    )
+			RETURN
+			IF(ISBLANK([GA Investimento]), "",
+			"<svg width='190' height='190' viewBox='0 0 190 190' xmlns='http://www.w3.org/2000/svg' style='display:block;margin:0 auto;'>" &
+			_donutPath &
+			"<circle cx='95' cy='95' r='52' fill='#161B22'/>" &
+			"<text x='95' y='90' text-anchor='middle' fill='#fff' font-size='20' font-weight='bold'>" & FORMAT(_pctEn, "0%") & "</text>" &
+			"<text x='95' y='108' text-anchor='middle' fill='#8B949E' font-size='10'>ativas</text>" &
+			"</svg>" &
+			"<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;font-family:Segoe UI;'>" &
+			"<div style='background:#1C2128;border-left:3px solid #22C55E;padding:6px 10px;border-radius:4px;'><div style='color:#22C55E;font-size:9px;font-weight:bold;'>ENABLED</div><div style='color:#fff;font-size:14px;font-weight:bold;'>" & FORMAT(_pctEn, "0%") & "</div><div style='color:#8B949E;font-size:10px;'>R$ " & FORMAT(_enabled/1000, "#,##0") & "K</div></div>" &
+			"<div style='background:#1C2128;border-left:3px solid #8B949E;padding:6px 10px;border-radius:4px;'><div style='color:#8B949E;font-size:9px;font-weight:bold;'>PAUSED</div><div style='color:#fff;font-size:14px;font-weight:bold;'>" & FORMAT(_pctPa, "0%") & "</div><div style='color:#8B949E;font-size:10px;'>R$ " & FORMAT(_paused/1000, "#,##0") & "K</div></div>" &
+			"</div>")
+		displayFolder: HTML Dashboard\GA Componentes
+		lineageTag: gabb0002-1111-2222-3333-DONUTGA00001
+
+	/// ═══════════════════════════════════════════════════════════
+	/// MINI FUNIL GA horizontal
+	/// ═══════════════════════════════════════════════════════════
+	measure '_HTML GA Mini Funil' =
+			VAR _imp = [GA Impressões]
+			VAR _cli = [GA Cliques]
+			VAR _conv = [GA Conversões]
+			VAR _rec = [GA Receita]
+			VAR _ctr = DIVIDE(_cli, _imp)
+			VAR _cr = DIVIDE(_conv, _cli)
+			RETURN
+			IF(ISBLANK(_imp), "",
+			"<div style='display:flex;align-items:center;gap:6px;font-family:Segoe UI;font-size:10px;'>" &
+			"<div style='flex:1;text-align:center;background:#4285F4;color:#fff;padding:6px;border-radius:4px;'><div style='font-size:13px;font-weight:bold;'>" & [_GA Imp BR] & "</div><div style='font-size:8px;opacity:0.85;'>IMPRESSÕES</div></div>" &
+			"<div style='color:#EAB308;font-weight:bold;font-size:10px;'>→ " & FORMAT(_ctr, "0.0%") & "</div>" &
+			"<div style='flex:1;text-align:center;background:#06B6D4;color:#0D1117;padding:6px;border-radius:4px;'><div style='font-size:13px;font-weight:bold;'>" & [_GA Cliques BR] & "</div><div style='font-size:8px;opacity:0.85;'>CLIQUES</div></div>" &
+			"<div style='color:#EAB308;font-weight:bold;font-size:10px;'>→ " & FORMAT(_cr, "0.0%") & "</div>" &
+			"<div style='flex:1;text-align:center;background:#A855F7;color:#fff;padding:6px;border-radius:4px;'><div style='font-size:13px;font-weight:bold;'>" & [_GA Conv BR] & "</div><div style='font-size:8px;opacity:0.85;'>CONVERSÕES</div></div>" &
+			"<div style='color:#22C55E;font-weight:bold;font-size:10px;'>→ " & [_GA ROAS BR] & "</div>" &
+			"<div style='flex:1;text-align:center;background:#22C55E;color:#fff;padding:6px;border-radius:4px;'><div style='font-size:13px;font-weight:bold;'>" & [_GA Receita BR] & "</div><div style='font-size:8px;opacity:0.85;'>RECEITA</div></div>" &
+			"</div>")
+		displayFolder: HTML Dashboard\GA Componentes
+		lineageTag: gabb0003-1111-2222-3333-FUNILGA00001
+
+	/// SCORECARD DE EFICIÊNCIA — CPC × CPA × CPM
+	measure _HTML_Scorecard_Eficiencia =
+			VAR _ga_cpc   = [GA CPC]
+			VAR _ga_cpm   = [GA CPM]
+			VAR _ga_cpa   = [GA CPA]
+			VAR _mc       = [Meta CPC]
+			VAR _mm       = [Meta CPM]
+			VAR _ma       = DIVIDE([Meta Investimento Total], [Total Conversões Ads])
+			VAR _cc       = [CPC Consolidado]
+			VAR _cm       = DIVIDE([Total Investimento Ads], [Total Impressões Ads]) * 1000
+			VAR _ca       = [CPA Ads]
+			VAR _p = "R$ "
+			VAR _fga_cpc  = IF(_ga_cpc > 0, _p & FORMAT(_ga_cpc,  "#,##0.00"), "—")
+			VAR _fga_cpm  = IF(_ga_cpm > 0, _p & FORMAT(_ga_cpm,  "#,##0.00"), "—")
+			VAR _fga_cpa  = IF(_ga_cpa > 0, _p & FORMAT(_ga_cpa,  "#,##0.00"), "—")
+			VAR _fmc      = IF(_mc    > 0, _p & FORMAT(_mc,        "#,##0.00"), "—")
+			VAR _fmm      = IF(_mm    > 0, _p & FORMAT(_mm,        "#,##0.00"), "—")
+			VAR _fma      = IF(_ma    > 0, _p & FORMAT(_ma,        "#,##0.00"), "—")
+			VAR _fcc      = IF(_cc    > 0, _p & FORMAT(_cc,        "#,##0.00"), "—")
+			VAR _fcm      = IF(_cm    > 0, _p & FORMAT(_cm,        "#,##0.00"), "—")
+			VAR _fca      = IF(_ca    > 0, _p & FORMAT(_ca,        "#,##0.00"), "—")
+			VAR _cgc = IF(_ga_cpc > 0 && _mc > 0, IF(_ga_cpc < _mc, "#22C55E", "#EF4444"), "#E6EDF3")
+			VAR _cmc = IF(_ga_cpc > 0 && _mc > 0, IF(_mc < _ga_cpc, "#22C55E", "#EF4444"), "#E6EDF3")
+			VAR _cga = IF(_ga_cpa > 0 && _ma > 0, IF(_ga_cpa < _ma, "#22C55E", "#EF4444"), "#E6EDF3")
+			VAR _cma = IF(_ga_cpa > 0 && _ma > 0, IF(_ma < _ga_cpa, "#22C55E", "#EF4444"), "#E6EDF3")
+			VAR _cgm = IF(_ga_cpm > 0 && _mm > 0, IF(_ga_cpm < _mm, "#22C55E", "#EF4444"), "#E6EDF3")
+			VAR _cmm = IF(_ga_cpm > 0 && _mm > 0, IF(_mm < _ga_cpm, "#22C55E", "#EF4444"), "#E6EDF3")
+			VAR _th = "style='font-size:10px;color:#8B949E;text-align:center;padding:4px 6px;border-bottom:1px solid #30363D;'"
+			VAR _tdl = "style='font-size:10px;color:#8B949E;padding:4px 8px;font-weight:600;background:#0D1117;'"
+			VAR _tdc = "style='font-size:13px;font-weight:700;text-align:center;padding:4px 6px;background:#161B22;'"
+			VAR _tdo = "style='font-size:12px;font-weight:700;text-align:center;padding:4px 6px;background:#1a1200;color:#F97316;'"
+			VAR _html =
+			"<div style='background:#0D1117;font-family:Segoe UI,sans-serif;padding:6px 8px;box-sizing:border-box;width:100%;height:100%;'>" &
+			"<div style='background:linear-gradient(90deg,#7C3AED,#4F46E5);padding:4px 10px;border-radius:4px;font-size:10px;font-weight:700;color:#fff;margin-bottom:5px;'>⚡ EFICIÊNCIA — CPC · CPA · CPM por canal</div>" &
+			"<table style='width:100%;border-collapse:collapse;'>" &
+			"<tr>" &
+			  "<th style='font-size:10px;color:#8B949E;text-align:left;padding:4px 8px;border-bottom:1px solid #30363D;width:60px;'>Métrica</th>" &
+			  "<th " & _th & " style='background:#1e3a8a;color:#93C5FD;font-size:10px;padding:4px 6px;text-align:center;border-bottom:1px solid #30363D;'>🅖 Google Ads</th>" &
+			  "<th " & _th & " style='background:#5b21b6;color:#C4B5FD;font-size:10px;padding:4px 6px;text-align:center;border-bottom:1px solid #30363D;'>🅕 Meta Ads</th>" &
+			  "<th " & _th & " style='background:#7c2d12;color:#FED7AA;font-size:10px;padding:4px 6px;text-align:center;border-bottom:1px solid #30363D;'>⊕ Consolidado</th>" &
+			"</tr>" &
+			"<tr>" &
+			  "<td " & _tdl & ">CPC</td>" &
+			  "<td " & _tdc & " style='font-size:13px;font-weight:700;text-align:center;padding:4px 6px;background:#161B22;color:" & _cgc & ";'>" & _fga_cpc & "</td>" &
+			  "<td " & _tdc & " style='font-size:13px;font-weight:700;text-align:center;padding:4px 6px;background:#161B22;color:" & _cmc & ";'>" & _fmc & "</td>" &
+			  "<td " & _tdo & ">" & _fcc & "</td>" &
+			"</tr>" &
+			"<tr>" &
+			  "<td " & _tdl & ">CPA</td>" &
+			  "<td " & _tdc & " style='font-size:13px;font-weight:700;text-align:center;padding:4px 6px;background:#161B22;color:" & _cga & ";'>" & _fga_cpa & "</td>" &
+			  "<td " & _tdc & " style='font-size:13px;font-weight:700;text-align:center;padding:4px 6px;background:#161B22;color:" & _cma & ";'>" & _fma & "</td>" &
+			  "<td " & _tdo & ">" & _fca & "</td>" &
+			"</tr>" &
+			"<tr>" &
+			  "<td " & _tdl & ">CPM</td>" &
+			  "<td " & _tdc & " style='font-size:13px;font-weight:700;text-align:center;padding:4px 6px;background:#161B22;color:" & _cgm & ";'>" & _fga_cpm & "</td>" &
+			  "<td " & _tdc & " style='font-size:13px;font-weight:700;text-align:center;padding:4px 6px;background:#161B22;color:" & _cmm & ";'>" & _fmm & "</td>" &
+			  "<td " & _tdo & ">" & _fcm & "</td>" &
+			"</tr>" &
+			"</table>" &
+			"<div style='font-size:8px;color:#374151;text-align:right;margin-top:3px;'>🟢 melhor · 🔴 pior vs canal</div>" &
+			"</div>"
+			RETURN _html
+		displayFolder: HTML Dashboard\TP V2 Bottom
+		lineageTag: scef0001-1111-2222-3333-SCORECARD001
+
+	/// TOP CAMPANHAS META — Barras Horizontais (Spend + CTR)
+	measure _HTML_Top_Campanhas_Meta =
+			VAR _dados = TOPN(9,
+			    ADDCOLUMNS(
+			        VALUES(Meta_Ads_Campanhas[campaign_name]),
+			        "@sp", CALCULATE(SUM(Meta_Ads_Campanhas[spend])),
+			        "@ct", CALCULATE(AVERAGE(Meta_Ads_Campanhas[ctr]))
+			    ),
+			    [@sp], DESC)
+			VAR _tot  = SUMX(_dados, [@sp])
+			VAR _mxsp = MAXX(_dados, [@sp])
+			VAR _n    = COUNTROWS(_dados)
+			VAR _W = 580  VAR _rh = 17  VAR _pad = 20
+			VAR _H = _pad + _n * _rh + 2
+			VAR _lw = 170  VAR _bmax = 290  VAR _cx = 472
+			VAR _rows = CONCATENATEX(_dados,
+			    VAR _rk = RANKX(_dados, [@sp], , DESC, Dense)
+			    VAR _y  = _pad + (_rk - 1) * _rh
+			    VAR _bw = MAX(2, DIVIDE([@sp], _mxsp) * _bmax)
+			    VAR _co = IF(_rk = 1, "#F97316", IF(_rk <= 3, "#FB923C", "#6B7280"))
+			    VAR _sf = IF([@sp] >= 1000, "R$ " & FORMAT([@sp]/1000,"#,##0.0") & "K", "R$ " & FORMAT([@sp],"#,##0"))
+			    VAR _pf = FORMAT(DIVIDE([@sp], _tot), "0%")
+			    VAR _tf = FORMAT([@ct]/100, "0.00%")
+			    VAR _nm = LEFT(Meta_Ads_Campanhas[campaign_name], 24)
+			    RETURN
+			    "<text x='2' y='" & FORMAT(_y+11,"0") & "' font-size='8' fill='#8B949E' font-family='Segoe UI'>" & _nm & "</text>" &
+			    "<rect x='" & FORMAT(_lw,"0") & "' y='" & FORMAT(_y+2,"0") & "' width='" & FORMAT(_bw,"0.0") & "' height='12' fill='" & _co & "' rx='2'/>" &
+			    "<text x='" & FORMAT(_lw+_bw+2,"0.0") & "' y='" & FORMAT(_y+11,"0") & "' font-size='8' fill='#E6EDF3' font-family='Segoe UI'>" & _sf & " (" & _pf & ")</text>" &
+			    "<text x='" & FORMAT(_cx,"0") & "' y='" & FORMAT(_y+11,"0") & "' font-size='8' fill='#3B82F6' font-family='Segoe UI'>" & _tf & "</text>",
+			    "", [@sp], DESC)
+			VAR _svg =
+			    "<svg xmlns='http://www.w3.org/2000/svg' width='100%' viewBox='0 0 " & FORMAT(_W,"0") & " " & FORMAT(_H,"0") & "'>" &
+			    "<rect width='" & FORMAT(_W,"0") & "' height='" & FORMAT(_H,"0") & "' fill='#161B22' rx='4'/>" &
+			    "<text x='" & FORMAT(_lw,"0") & "' y='13' font-size='9' fill='#F97316' font-weight='700' font-family='Segoe UI'>SPEND</text>" &
+			    "<text x='" & FORMAT(_cx,"0") & "' y='13' font-size='9' fill='#3B82F6' font-weight='700' font-family='Segoe UI'>CTR</text>" &
+			    _rows & "</svg>"
+			RETURN IF(_mxsp = 0 || ISBLANK(_mxsp), "", _svg)
+		displayFolder: HTML Dashboard\TP V2 Bottom
+		lineageTag: topc0001-1111-2222-3333-METACAMP001
+
+	/// ROAS SEMANAL — Linha de Tendência por Semana
+	measure _HTML_ROAS_Semanal =
+			VAR _base = ADDCOLUMNS(
+			    VALUES('01_Calendário'[SemanaDoAno]),
+			    "@lbl",    CALCULATE(MAX('01_Calendário'[Semana Label])),
+			    "@roas",   CALCULATE([ROAS Conversão Ads]),
+			    "@invest", CALCULATE([Total Investimento Ads])
+			)
+			VAR _d = TOPN(26, FILTER(_base, [@invest] > 0), '01_Calendário'[SemanaDoAno], ASC)
+			VAR _n = COUNTROWS(_d)
+			VAR _mx = MAXX(_d, [@roas]) * 1.2
+			VAR _W = 550  VAR _H = 62
+			VAR _ml = 24  VAR _mr = 6  VAR _mt = 6  VAR _mb = 14
+			VAR _pw = _W - _ml - _mr
+			VAR _ph = _H - _mt - _mb
+			VAR _ns = MAX(1, _n - 1)
+			VAR _pts = CONCATENATEX(_d,
+			    VAR _i = RANKX(_d, '01_Calendário'[SemanaDoAno], , ASC, Dense) - 1
+			    VAR _cx = _ml + DIVIDE(_i, _ns) * _pw
+			    VAR _cy = _mt + _ph - MAX(0, DIVIDE([@roas], _mx) * _ph)
+			    RETURN FORMAT(_cx,"0.0") & "," & FORMAT(_cy,"0.0"),
+			    " ", '01_Calendário'[SemanaDoAno], ASC)
+			VAR _dots = CONCATENATEX(_d,
+			    VAR _j  = RANKX(_d, '01_Calendário'[SemanaDoAno], , ASC, Dense) - 1
+			    VAR _cx = _ml + DIVIDE(_j, _ns) * _pw
+			    VAR _cy = _mt + _ph - MAX(0, DIVIDE([@roas], _mx) * _ph)
+			    VAR _rv = [@roas]
+			    VAR _co = IF(_rv >= 5, "#22C55E", IF(_rv >= 3, "#EAB308", "#EF4444"))
+			    VAR _lb = [@lbl]
+			    RETURN
+			    "<circle cx='" & FORMAT(_cx,"0.0") & "' cy='" & FORMAT(_cy,"0.0") & "' r='2.5' fill='" & _co & "'/>" &
+			    IF(_j = 0 || _j = _ns,
+			        "<text x='" & FORMAT(_cx,"0.0") & "' y='" & FORMAT(_H-1,"0") & "' text-anchor='middle' font-size='7' fill='#6B7280'>" & _lb & "</text>" &
+			        "<text x='" & FORMAT(_cx,"0.0") & "' y='" & FORMAT(_cy-3,"0.0") & "' text-anchor='middle' font-size='8' fill='" & _co & "' font-weight='600'>" & FORMAT(_rv,"0.0") & "x</text>",
+			        ""),
+			    "", '01_Calendário'[SemanaDoAno], ASC)
+			VAR _r3y = IF(_mx > 0, _mt + _ph - MAX(0, DIVIDE(3, _mx) * _ph), _mt)
+			VAR _r3  = IF(_mx >= 3,
+			    "<line x1='" & FORMAT(_ml,"0") & "' y1='" & FORMAT(_r3y,"0.0") & "' x2='" & FORMAT(_ml+_pw,"0") & "' y2='" & FORMAT(_r3y,"0.0") & "' stroke='#EAB308' stroke-width='1' stroke-dasharray='3,2' opacity='0.5'/>" &
+			    "<text x='" & FORMAT(_ml-1,"0") & "' y='" & FORMAT(_r3y+3,"0.0") & "' text-anchor='end' font-size='7' fill='#EAB308'>3x</text>", "")
+			VAR _svg =
+			    "<svg xmlns='http://www.w3.org/2000/svg' width='100%' viewBox='0 0 " & FORMAT(_W,"0") & " " & FORMAT(_H,"0") & "'>" &
+			    "<rect width='" & FORMAT(_W,"0") & "' height='" & FORMAT(_H,"0") & "' fill='#161B22' rx='4'/>" &
+			    "<line x1='" & FORMAT(_ml,"0") & "' y1='" & FORMAT(_mt,"0") & "' x2='" & FORMAT(_ml,"0") & "' y2='" & FORMAT(_mt+_ph,"0") & "' stroke='#30363D' stroke-width='1'/>" &
+			    "<line x1='" & FORMAT(_ml,"0") & "' y1='" & FORMAT(_mt+_ph,"0") & "' x2='" & FORMAT(_ml+_pw,"0") & "' y2='" & FORMAT(_mt+_ph,"0") & "' stroke='#30363D' stroke-width='1'/>" &
+			    "<text x='" & FORMAT(_ml-1,"0") & "' y='" & FORMAT(_mt+5,"0") & "' text-anchor='end' font-size='7' fill='#4B5563'>" & FORMAT(_mx,"0.0") & "x</text>" &
+			    _r3 &
+			    "<polyline points='" & _pts & "' fill='none' stroke='#3B82F6' stroke-width='2' stroke-linejoin='round'/>" &
+			    _dots & "</svg>"
+			RETURN IF(ISBLANK(_mx) || _mx = 0 || _n = 0, "", _svg)
+		displayFolder: HTML Dashboard\TP V2 Bottom
+		lineageTag: roas0001-1111-2222-3333-ROASSEM001
+
+	/// ROAS Conversão Ads no ano anterior (mesmo período).
+	measure 'ROAS Ads Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _rec_ga = CALCULATE(
+			    0 + SUM(Google_Ads_Campanhas[conversions_value]),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+			VAR _rec_meta = CALCULATE(
+			    IF(ISBLANK(SUM(Meta_Ads_Campanhas[purchase_value])), 0, SUM(Meta_Ads_Campanhas[purchase_value])),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+			VAR _rec = _rec_ga + _rec_meta
+			VAR _inv_ga = CALCULATE(
+			    DIVIDE(SUM(Google_Ads_Campanhas[cost_micros]), 1000000),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+			VAR _inv_meta = CALCULATE(
+			    SUM(Meta_Ads_Campanhas[spend]),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+			VAR _inv = _inv_ga + _inv_meta
+			RETURN IF(_rec > 0 && _inv > 0, DIVIDE(_rec, _inv), BLANK())
+		formatString: 0.00"x"
+		displayFolder: Tráfego Pago Consolidado\Retorno
+		lineageTag: roas-conv-aa01-4c76-a3b9-000200001111
+
+	/// Delta YoY do ROAS Conversão Ads.
+	measure 'ROAS Ads ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _rec_ga = CALCULATE(
+			    0 + SUM(Google_Ads_Campanhas[conversions_value]),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+			VAR _rec_meta = CALCULATE(
+			    IF(ISBLANK(SUM(Meta_Ads_Campanhas[purchase_value])), 0, SUM(Meta_Ads_Campanhas[purchase_value])),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+			VAR _rec = _rec_ga + _rec_meta
+			VAR _inv_ga = CALCULATE(
+			    DIVIDE(SUM(Google_Ads_Campanhas[cost_micros]), 1000000),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+			VAR _inv_meta = CALCULATE(
+			    SUM(Meta_Ads_Campanhas[spend]),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+			VAR _cy = IF(_rec > 0 && _inv_ga + _inv_meta > 0, DIVIDE(_rec, _inv_ga + _inv_meta), BLANK())
+			VAR _ly = [ROAS Ads Ano Anterior]
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Tráfego Pago Consolidado\Retorno
+		lineageTag: roas-conv-bb02-4c76-a3b9-000200002222
+
+	/// Receita de conversões Ads no ano anterior (mesmo período).
+	measure 'Receita Ads Ano Ant' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _ga = CALCULATE(
+			    0 + SUM(Google_Ads_Campanhas[conversions_value]),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+			VAR _meta = CALCULATE(
+			    IF(ISBLANK(SUM(Meta_Ads_Campanhas[purchase_value])), 0, SUM(Meta_Ads_Campanhas[purchase_value])),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+			RETURN _ga + _meta
+		formatString: R$ #,##0.00
+		displayFolder: Tráfego Pago Consolidado\Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-0001000010c1
+
+	/// Variação YoY da receita de conversões Ads.
+	measure 'Receita Ads ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _ga_cy = CALCULATE(
+			    0 + SUM(Google_Ads_Campanhas[conversions_value]),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+			VAR _meta_cy = CALCULATE(
+			    IF(ISBLANK(SUM(Meta_Ads_Campanhas[purchase_value])), 0, SUM(Meta_Ads_Campanhas[purchase_value])),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+			VAR _cy = _ga_cy + _meta_cy
+			VAR _ly = [Receita Ads Ano Ant]
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), 0)
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Tráfego Pago Consolidado\Comparativos
+		lineageTag: 7d3bb7bb-aa01-4c76-a3b9-0001000010c2
+
+	/// ROAS Google Ads no ano anterior (mesmo período).
+	measure 'GA ROAS Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _rec = CALCULATE(
+			    SUM(Google_Ads_Campanhas[conversions_value]),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+			VAR _inv = CALCULATE(
+			    DIVIDE(SUM(Google_Ads_Campanhas[cost_micros]), 1000000),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+			RETURN IF(_rec > 0 && _inv > 0, DIVIDE(_rec, _inv), BLANK())
+		formatString: 0.00"x"
+		displayFolder: Google Ads\Retorno
+		lineageTag: ga100001-aaaa-bbbb-cccc-GA00YOY00001
+
+	/// Delta YoY do ROAS Google Ads.
+	measure 'GA ROAS ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _rec_cy = CALCULATE(
+			    SUM(Google_Ads_Campanhas[conversions_value]),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+			VAR _inv_cy = CALCULATE(
+			    DIVIDE(SUM(Google_Ads_Campanhas[cost_micros]), 1000000),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+			VAR _cy = IF(_rec_cy > 0 && _inv_cy > 0, DIVIDE(_rec_cy, _inv_cy), BLANK())
+			VAR _ly = [GA ROAS Ano Anterior]
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0%;-0%;0%
+		displayFolder: Google Ads\Retorno
+		lineageTag: ga100002-aaaa-bbbb-cccc-GA00YOY00002
+
+	/// Total de leads gerados pelo Meta Ads. Filtrado pelo ano selecionado (ou ano corrente por padrão).
+	measure 'Meta Leads' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Ads_Campanhas[leads]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: Meta Ads\Conversões
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000020
+
+	/// Leads Meta no ano anterior.
+	measure 'Meta Leads Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(SUM(Meta_Ads_Campanhas[leads]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: #,##0
+		displayFolder: Meta Ads\Comparativos
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000021
+
+	/// Variação YoY dos leads Meta.
+	measure 'Meta Leads ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _cy = CALCULATE(SUM(Meta_Ads_Campanhas[leads]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = [Meta Leads Ano Anterior]
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), 0)
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Meta Ads\Comparativos
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000022
+
+	/// Total de compras atribuídas pelo Meta Ads. Filtrado pelo ano selecionado (ou ano corrente por padrão).
+	measure 'Meta Purchases' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Ads_Campanhas[purchases]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: Meta Ads\Conversões
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000023
+
+	/// Purchases Meta no ano anterior (para comparativo YoY).
+	measure 'Meta Purchases Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(SUM(Meta_Ads_Campanhas[purchases]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: #,##0
+		displayFolder: Meta Ads\Conversões
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000024
+
+	/// Delta YoY de Purchases Meta.
+	measure 'Meta Purchases ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _cy = CALCULATE(SUM(Meta_Ads_Campanhas[purchases]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = [Meta Purchases Ano Anterior]
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), 0)
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Meta Ads\Conversões
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000025
+
+	/// Receita total atribuída às campanhas Meta (purchase_value do pixel). Filtrado pelo ano selecionado (ou ano corrente por padrão).
+	measure 'Meta Receita Ads' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Ads_Campanhas[meta_revenue]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: R$ #,##0.00
+		displayFolder: Meta Ads\Receita
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000026
+
+	/// FB Saldo Seguidores do ano anterior (para comparativo YoY).
+	measure 'FB Saldo Seguidores Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _novos = CALCULATE(
+			    SUM(Meta_Organico_FB[valor]),
+			    Meta_Organico_FB[metrica] = "page_daily_follows_unique",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+			VAR _perdidos = CALCULATE(
+			    SUM(Meta_Organico_FB[valor]),
+			    Meta_Organico_FB[metrica] = "page_daily_unfollows_unique",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+			RETURN IF(ISBLANK(_novos), BLANK(), _novos - IF(ISBLANK(_perdidos), 0, _perdidos))
+		formatString: #,##0
+		displayFolder: Orgânico FB\Comparativos
+		lineageTag: 7700aaaa-bbbb-cccc-dddd-FB0000000010
+
+	/// Delta YoY do Saldo de Seguidores FB — mesmo período (YTD vs YTD).
+	measure 'FB Saldo Seguidores ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			VAR _cy_nov = CALCULATE(SUM(Meta_Organico_FB[valor]), Meta_Organico_FB[metrica] = "page_daily_follows_unique", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _cy_per = CALCULATE(SUM(Meta_Organico_FB[valor]), Meta_Organico_FB[metrica] = "page_daily_unfollows_unique", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _cy = _cy_nov - _cy_per
+			VAR _ly_nov = CALCULATE(SUM(Meta_Organico_FB[valor]), Meta_Organico_FB[metrica] = "page_daily_follows_unique", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
+			VAR _ly_per = CALCULATE(SUM(Meta_Organico_FB[valor]), Meta_Organico_FB[metrica] = "page_daily_unfollows_unique", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
+			VAR _ly = _ly_nov - _ly_per
+			RETURN IF(_ly <> 0, DIVIDE(_cy - _ly, ABS(_ly)), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Orgânico FB
+		lineageTag: 5500aaaa-bbbb-cccc-dddd-FB0000000012
+
+	/// IG Contas Engajadas do ano anterior (para comparativo YoY).
+	measure 'IG Contas Engajadas Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_IG[valor]),
+			    Meta_Organico_IG[metrica] = "accounts_engaged",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1
+			)
+		formatString: #,##0
+		displayFolder: Orgânico IG\Comparativos
+		lineageTag: 7700aaaa-bbbb-cccc-dddd-IG0000000010
+
+	/// Delta YoY de Contas Engajadas IG — mesmo período (YTD vs YTD).
+	measure 'IG Contas Engajadas ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			VAR _cy = CALCULATE(SUM(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "accounts_engaged", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = CALCULATE(SUM(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "accounts_engaged", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Orgânico IG
+		lineageTag: 7700aaaa-bbbb-cccc-dddd-IG0000000021
+
+	/// Visualizações de perfil IG (profile_views via Meta Graph API).
+	measure 'IG Profile Views' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			    CALCULATE(
+			        SUM(Meta_Organico_IG[valor]),
+			        Meta_Organico_IG[metrica] = "profile_views",
+			        REMOVEFILTERS('01_Calendário'[Ano]),
+			        '01_Calendário'[Ano] = _anoMax
+			    )
+		formatString: #,##0
+		displayFolder: Orgânico IG
+		lineageTag: 7700aaaa-bbbb-cccc-dddd-IG0000000012
+
+	/// Cliques em website via perfil IG (website_clicks via Meta Graph API).
+	measure 'IG Website Clicks' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			    CALCULATE(
+			        SUM(Meta_Organico_IG[valor]),
+			        Meta_Organico_IG[metrica] = "website_clicks",
+			        REMOVEFILTERS('01_Calendário'[Ano]),
+			        '01_Calendário'[Ano] = _anoMax
+			    )
+		formatString: #,##0
+		displayFolder: Orgânico IG
+		lineageTag: 7700aaaa-bbbb-cccc-dddd-IG0000000013
+
+	/// CPL (Custo por Lead) Meta Ads.
+	measure 'Meta CPL' = DIVIDE([Meta Investimento Total], [Meta Leads])
+		formatString: R$ #,##0.00
+		displayFolder: Meta Ads\Eficiência
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000030
+
+	/// CPA (Custo por Aquisição/Purchase) Meta Ads.
+	measure 'Meta CPA' = DIVIDE([Meta Investimento Total], [Meta Purchases])
+		formatString: R$ #,##0.00
+		displayFolder: Meta Ads\Eficiência
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000031
+
+	/// ROAS Meta Ads (Receita / Investimento).
+	measure 'Meta ROAS' = DIVIDE([Meta Receita Ads], [Meta Investimento Total])
+		formatString: #,##0.00x
+		displayFolder: Meta Ads\Eficiência
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000032
+
+	/// Eventos de Add to Cart atribuídos pelo pixel Meta. Filtrado pelo ano selecionado (ou ano corrente por padrão).
+	measure 'Meta Add to Cart' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Ads_Campanhas[add_to_cart]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: Meta Ads\Funil
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000033
+
+	/// Eventos de Initiate Checkout atribuídos pelo pixel Meta. Filtrado pelo ano selecionado (ou ano corrente por padrão).
+	measure 'Meta Initiate Checkout' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Ads_Campanhas[initiate_checkout]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: Meta Ads\Funil
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000034
+
+	/// Eventos de Complete Registration atribuídos pelo pixel Meta. Filtrado pelo ano selecionado (ou ano corrente por padrão).
+	measure 'Meta Complete Registration' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Ads_Campanhas[complete_registration]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: Meta Ads\Funil
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000035
+
+	/// Conversas de mensagem iniciadas via Meta Ads. Filtrado pelo ano selecionado (ou ano corrente por padrão).
+	measure 'Meta Messaging Conversations Started' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Ads_Campanhas[messaging_conversation_started_7d]),
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: Meta Ads\Funil
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000036
+
+	/// Taxa de conversão Lead → Purchase (Purchases / Leads).
+	measure 'Meta Taxa Lead→Purchase' = DIVIDE([Meta Purchases], [Meta Leads])
+		formatString: 0.00%
+		displayFolder: Meta Ads\Funil
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000037
+
+	/// Receita Meta Ads no ano anterior (YoY).
+	measure 'Meta Receita Ano Ant' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(SUM(Meta_Ads_Campanhas[meta_revenue]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: R$ #,##0.00
+		displayFolder: Meta Ads\Retorno
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000038
+
+	/// Delta YoY da Receita Meta Ads.
+	measure 'Meta Receita Ads ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _cy = CALCULATE(SUM(Meta_Ads_Campanhas[meta_revenue]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = [Meta Receita Ano Ant]
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Meta Ads\Retorno
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000039
+
+	/// IG Seguidores ΔYoY — mesmo período (YTD vs YTD).
+	measure 'IG Seguidores ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			VAR _cy = CALCULATE(MAX(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = CALCULATE(MAX(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Orgânico IG
+		lineageTag: 1023a90b-dceb-48dd-952a-fecb813d7d71
+
+	/// Delta MoM do Investimento Meta.
+	measure 'Meta Investimento ΔMoM' =
+			VAR _pm = CALCULATE([Meta Investimento Total], DATEADD('01_Calendário'[Date], -1, MONTH))
+			RETURN IF(_pm > 0, DIVIDE([Meta Investimento Total] - _pm, _pm), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Meta Ads\Custo
+		lineageTag: 8e4cc8cc-bb02-4d87-b4ca-MA0000000040
+
+	/// ROAS Google Ads no ano anterior (YoY).
+	measure 'ROAS Google Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE([ROAS Google], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: 0.00"x"
+		displayFolder: Google Ads\Retorno
+		lineageTag: ga-roas-aa01-4c76-a3b9-000100001111
+
+	/// Delta YoY do ROAS Google Ads.
+	measure 'ROAS Google ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _cy = CALCULATE([ROAS Google], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = [ROAS Google Ano Anterior]
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Google Ads\Retorno
+		lineageTag: ga-roas-bb02-4c76-a3b9-000100002222
+
+	/// Impressões de posts e conteúdo orgânico no Facebook.
+	measure 'FB Impressões' = SUM(Meta_Organico_FB[impressions])
+		formatString: #,##0
+		displayFolder: Orgânico FB
+		lineageTag: 6b5a4b6c-a14d-4fe8-ab8b-ec29c325ac55
+
+	/// GA Impressões no ano anterior (YoY).
+	measure 'GA Impressões Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(SUM(Google_Ads_Campanhas[impressions]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: #,##0
+		displayFolder: Google Ads
+		lineageTag: ga-imp-aa01-4c76-a3b9-000300001111
+
+	/// CPA GA no mês anterior.
+	measure 'GA CPA Mês Anterior' = CALCULATE([GA CPA], DATEADD('01_Calendário'[Date], -1, MONTH))
+		formatString: R$ #,##0.00
+		displayFolder: Google Ads
+		lineageTag: ga-cpa-mm01-4c76-a3b9-000400001111
+
+	/// Delta MoM do ROAS Google Ads.
+	measure 'GA ROAS ΔMoM' =
+			VAR _pm = [GA ROAS Mês Anterior]
+			RETURN IF(_pm > 0, DIVIDE([GA ROAS] - _pm, _pm), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Google Ads\Retorno
+		lineageTag: ga-roas-mm01-4c76-a3b9-000500001111
+
+	/// Quantidade de campanhas ativas no Google Ads.
+	measure 'GA Qtd Campanhas' = DISTINCTCOUNT(Google_Ads_Campanhas[campaign_id])
+		formatString: #,##0
+		displayFolder: Google Ads
+		lineageTag: ga-qtd-cam01-4c76-a3b9-000600001111
+
+	/// Investimento total no ano anterior ao máximo selecionado — para gráfico YoY mensal nativo.
+	measure 'Invest Ano Ant' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN CALCULATE([_Total Invest Bruto], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: R$ #,##0.00
+		displayFolder: Gráficos
+		lineageTag: chart-ant01-4c76-a3b9-000600001111
+
+	/// GA Receita no ano máximo selecionado — para gráficos mensais sem mix de anos.
+	measure 'Chart GA Receita' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN CALCULATE(SUM(Google_Ads_Campanhas[conversions_value]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+		formatString: R$ #,##0.00
+		displayFolder: Gráficos
+		lineageTag: chart-garec01-4c76-a3b9-000700001111
+
+	/// GA Invest do ano anterior ao máximo selecionado — para gráfico YoY mensal GA.
+	measure 'GA Invest Ano Ant' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN CALCULATE([GA Investimento], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: R$ #,##0.00
+		displayFolder: Gráficos
+		lineageTag: chart-gaant01-4c76-a3b9-000800001111
+
+	/// Investimento total no ano máximo selecionado — evita mix de anos nos gráficos mensais.
+	measure Invest =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN CALCULATE([_Total Invest Bruto], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+		formatString: R$ #,##0.00
+		displayFolder: Gráficos
+		lineageTag: chart-inv01-4c76-a3b9-000100001111
+
+	/// Investimento Meta no ano máximo selecionado — para gráficos mensais por canal.
+	measure 'Meta Invest' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN CALCULATE([Meta Investimento Total], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+		formatString: R$ #,##0.00
+		displayFolder: Gráficos
+		lineageTag: chart-meta01-4c76-a3b9-000200001111
+
+	/// Investimento GA no ano máximo selecionado — para gráficos mensais por canal.
+	measure 'GA Invest' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN CALCULATE([GA Investimento], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+		formatString: R$ #,##0.00
+		displayFolder: Gráficos
+		lineageTag: chart-ga01-4c76-a3b9-000300001111
+
+	/// Receita Conversões Ads no ano máximo selecionado — para gráficos mensais.
+	measure Receita =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN CALCULATE([Receita Conversões Ads], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+		formatString: R$ #,##0.00
+		displayFolder: Gráficos
+		lineageTag: chart-rec01-4c76-a3b9-000400001111
+
+	/// Gráfico SVG: investimento mensal YoY (ano anterior vs ano atual). Renderizado via HTML Content visual.
+	measure 'YoY Invest Mensal' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _anoAnt = _anoMax - 1
+			VAR _meses = GENERATESERIES(1, 12, 1)
+			VAR _dados = ADDCOLUMNS(
+			    _meses,
+			    "Abrev", SWITCH([Value],
+			        1,"Jan",2,"Fev",3,"Mar",4,"Abr",5,"Mai",6,"Jun",
+			        7,"Jul",8,"Ago",9,"Set",10,"Out",11,"Nov",12,"Dez",""),
+			    "CY", CALCULATE(
+			        SUM(Meta_Ads_Campanhas[spend]) + DIVIDE(SUM(Google_Ads_Campanhas[cost_micros]), 1000000),
+			        REMOVEFILTERS('01_Calendário'),
+			        '01_Calendário'[Ano] = _anoMax,
+			        TREATAS({[Value]}, '01_Calendário'[MêsNúmero])
+			    ),
+			    "LY", CALCULATE(
+			        SUM(Meta_Ads_Campanhas[spend]) + DIVIDE(SUM(Google_Ads_Campanhas[cost_micros]), 1000000),
+			        REMOVEFILTERS('01_Calendário'),
+			        '01_Calendário'[Ano] = _anoAnt,
+			        TREATAS({[Value]}, '01_Calendário'[MêsNúmero])
+			    )
+			)
+			VAR _maxRaw = MAXX(_dados, MAX([CY], [LY]))
+			VAR _maxV = MAX(1, _maxRaw)
+			VAR _cH = 90
+			VAR _cX = 36
+			VAR _cY = 22
+			VAR _gW = 54
+			VAR _bW = 20
+			VAR _baseY = _cY + _cH
+			VAR _bars = CONCATENATEX(
+			    TOPN(12, _dados, [Value], ASC),
+			    VAR _n = [Value]
+			    VAR _gx = _cX + (_n - 1) * _gW
+			    VAR _ly = [LY]
+			    VAR _cy = [CY]
+			    VAR _lyH = INT(_ly / _maxV * _cH)
+			    VAR _cyH = INT(_cy / _maxV * _cH)
+			    VAR _lyY = _baseY - _lyH
+			    VAR _cyY = _baseY - _cyH
+			    VAR _lx = _gx + 3
+			    VAR _cx = _gx + 26
+			    VAR _lyFmt = IF(_ly >= 1000, FORMAT(_ly / 1000, "#,0.0") & "K", FORMAT(_ly, "#,0"))
+			    VAR _cyFmt = IF(_cy >= 1000, FORMAT(_cy / 1000, "#,0.0") & "K", FORMAT(_cy, "#,0"))
+			    RETURN
+			        IF(_lyH > 0, "<rect x='" & _lx & "' y='" & _lyY & "' width='" & _bW & "' height='" & _lyH & "' fill='#5B7FA6' rx='2'/>", "") &
+			        IF(_cyH > 0, "<rect x='" & _cx & "' y='" & _cyY & "' width='" & _bW & "' height='" & _cyH & "' fill='#F97316' rx='2'/>", "") &
+			        IF(_lyH > 14, "<text x='" & (_lx + 10) & "' y='" & (_lyY - 3) & "' text-anchor='middle' font-size='7' fill='#8B9CB3' font-family='Segoe UI,sans-serif'>" & _lyFmt & "</text>", "") &
+			        IF(_cyH > 14, "<text x='" & (_cx + 10) & "' y='" & (_cyY - 3) & "' text-anchor='middle' font-size='7' fill='#F97316' font-family='Segoe UI,sans-serif'>" & _cyFmt & "</text>", "") &
+			        "<text x='" & (_gx + 27) & "' y='" & (_baseY + 12) & "' text-anchor='middle' font-size='8' fill='#8B9CB3' font-family='Segoe UI,sans-serif'>" & [Abrev] & "</text>"
+			)
+			VAR _mid50Y = INT(_cY + _cH * 0.5)
+			VAR _gridLines =
+			    "<line x1='" & _cX & "' y1='" & _mid50Y & "' x2='" & (_cX + 12 * _gW) & "' y2='" & _mid50Y & "' stroke='#21262D' stroke-width='1' stroke-dasharray='3,3'/>" &
+			    "<line x1='" & _cX & "' y1='" & _cY & "' x2='" & (_cX + 12 * _gW) & "' y2='" & _cY & "' stroke='#21262D' stroke-width='1' stroke-dasharray='3,3'/>"
+			VAR _midLbl = IF(_maxV >= 2000, FORMAT(_maxV / 2000, "#,0.0") & "K", FORMAT(_maxV / 2, "#,0"))
+			VAR _topLbl = IF(_maxV >= 1000, FORMAT(_maxV / 1000, "#,0.0") & "K", FORMAT(_maxV, "#,0"))
+			VAR _svg =
+			    "<svg xmlns='http://www.w3.org/2000/svg' width='100%' viewBox='0 0 700 155'>" &
+			    "<text x='350' y='13' text-anchor='middle' font-family='Segoe UI,sans-serif' font-size='11' font-weight='bold' fill='#C9D1D9'>Investimento Mensal: " & _anoAnt & " vs " & _anoMax & "</text>" &
+			    "<line x1='" & _cX & "' y1='" & _cY & "' x2='" & _cX & "' y2='" & _baseY & "' stroke='#30363D' stroke-width='1'/>" &
+			    "<line x1='" & _cX & "' y1='" & _baseY & "' x2='" & (_cX + 12 * _gW) & "' y2='" & _baseY & "' stroke='#30363D' stroke-width='1'/>" &
+			    "<text x='" & (_cX - 4) & "' y='" & (_cY + 4) & "' text-anchor='end' font-size='7' fill='#8B9CB3' font-family='Segoe UI,sans-serif'>" & _topLbl & "</text>" &
+			    "<text x='" & (_cX - 4) & "' y='" & (_mid50Y + 4) & "' text-anchor='end' font-size='7' fill='#8B9CB3' font-family='Segoe UI,sans-serif'>" & _midLbl & "</text>" &
+			    "<text x='" & (_cX - 4) & "' y='" & (_baseY + 4) & "' text-anchor='end' font-size='7' fill='#8B9CB3' font-family='Segoe UI,sans-serif'>0</text>" &
+			    _gridLines &
+			    _bars &
+			    "<rect x='230' y='138' width='10' height='10' fill='#5B7FA6' rx='2'/>" &
+			    "<text x='244' y='147' font-family='Segoe UI,sans-serif' font-size='9' fill='#8B9CB3'>" & _anoAnt & "</text>" &
+			    "<rect x='300' y='138' width='10' height='10' fill='#F97316' rx='2'/>" &
+			    "<text x='314' y='147' font-family='Segoe UI,sans-serif' font-size='9' fill='#F97316'>" & _anoMax & "</text>" &
+			    "</svg>"
+			RETURN IF(_maxRaw <= 0, "", _svg)
+		displayFolder: Gráficos
+		lineageTag: chart-yoy01-4c76-a3b9-000500001111
+
+	measure 'Receita Ingressos AA' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[ValorUnitario]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    NOT Limber_Vendas[Categoria] IN {"Aluguel de Boia - LOCAL", "Aluguel de Armários", "Pó Colorido"},
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _ano - 1
+			)
+		formatString: R$ #,##0.00
+		displayFolder: E-commerce\Comparativos
+		lineageTag: ec000101-1111-2222-3333-ECOMM000101
+
+	measure 'Pedidos Confirmados AA' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    DISTINCTCOUNT(Limber_Vendas[Localizador]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    NOT Limber_Vendas[Categoria] IN {"Aluguel de Boia - LOCAL", "Aluguel de Armários", "Pó Colorido"},
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _ano - 1
+			)
+		formatString: #,##0
+		displayFolder: E-commerce\Comparativos
+		lineageTag: ec000102-1111-2222-3333-ECOMM000102
+
+	measure 'Qtd Ingressos AA' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[QtdPessoas]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    NOT Limber_Vendas[Categoria] IN {"Aluguel de Boia - LOCAL", "Aluguel de Armários", "Pó Colorido"},
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _ano - 1
+			)
+		formatString: #,##0
+		displayFolder: E-commerce\Comparativos
+		lineageTag: ec000103-1111-2222-3333-ECOMM000103
+
+	measure 'Ticket Médio por Pedido AA' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			VAR _receita = CALCULATE(
+			    SUM(Limber_Vendas[ValorUnitario]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    NOT Limber_Vendas[Categoria] IN {"Aluguel de Boia - LOCAL", "Aluguel de Armários", "Pó Colorido"},
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _ano - 1
+			)
+			VAR _pedidos = CALCULATE(
+			    DISTINCTCOUNT(Limber_Vendas[Localizador]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    NOT Limber_Vendas[Categoria] IN {"Aluguel de Boia - LOCAL", "Aluguel de Armários", "Pó Colorido"},
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _ano - 1
+			)
+			RETURN DIVIDE(_receita, _pedidos)
+		formatString: R$ #,##0.00
+		displayFolder: E-commerce\Comparativos
+		lineageTag: ec000104-1111-2222-3333-ECOMM000104
+
+	measure 'ROAS Ingressos AA' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			VAR _receita = CALCULATE(
+			    SUM(Limber_Vendas[ValorUnitario]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    NOT Limber_Vendas[Categoria] IN {"Aluguel de Boia - LOCAL", "Aluguel de Armários", "Pó Colorido"},
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _ano - 1
+			)
+			VAR _invest_meta = CALCULATE(
+			    SUM(Meta_Ads_Campanhas[spend]),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _ano - 1
+			)
+			VAR _invest_ga = CALCULATE(
+			    DIVIDE(SUM(Google_Ads_Campanhas[cost_micros]), 1000000),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _ano - 1
+			)
+			VAR _invest = _invest_meta + _invest_ga
+			RETURN
+			IF(_receita > 0 && _invest > 0, DIVIDE(_receita, _invest), BLANK())
+		formatString: 0.00"x"
+		displayFolder: E-commerce\Comparativos
+		lineageTag: ec000105-1111-2222-3333-ECOMM000105
+
+	measure 'CAC (Custo por Venda) AA' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			VAR _invest_meta = CALCULATE(
+			    SUM(Meta_Ads_Campanhas[spend]),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _ano - 1
+			)
+			VAR _invest_ga = CALCULATE(
+			    DIVIDE(SUM(Google_Ads_Campanhas[cost_micros]), 1000000),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _ano - 1
+			)
+			VAR _invest = _invest_meta + _invest_ga
+			VAR _pedidos = CALCULATE(
+			    DISTINCTCOUNT(Limber_Vendas[Localizador]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    NOT Limber_Vendas[Categoria] IN {"Aluguel de Boia - LOCAL", "Aluguel de Armários", "Pó Colorido"},
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _ano - 1
+			)
+			RETURN
+			IF(_pedidos > 0, DIVIDE(_invest, _pedidos), BLANK())
+		formatString: R$ #,##0.00
+		displayFolder: E-commerce\Comparativos
+		lineageTag: ec000106-1111-2222-3333-ECOMM000106
+
+	measure 'Δ% Receita Ingressos' = DIVIDE([Receita Ingressos] - [Receita Ingressos AA], [Receita Ingressos AA])
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: E-commerce\Comparativos
+		lineageTag: ec000107-1111-2222-3333-ECOMM000107
+
+	measure 'Δ% Pedidos Confirmados' = DIVIDE([Pedidos Confirmados] - [Pedidos Confirmados AA], [Pedidos Confirmados AA])
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: E-commerce\Comparativos
+		lineageTag: ec000108-1111-2222-3333-ECOMM000108
+
+	measure 'Δ% ROAS Ingressos' = DIVIDE([ROAS Ingressos] - [ROAS Ingressos AA], [ROAS Ingressos AA])
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: E-commerce\Comparativos
+		lineageTag: ec000109-1111-2222-3333-ECOMM000109
+
+	measure 'Pedidos Confirmados' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    DISTINCTCOUNT(Limber_Vendas[Localizador]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    NOT Limber_Vendas[Categoria] IN {"Aluguel de Boia - LOCAL", "Aluguel de Armários", "Pó Colorido"},
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: E-commerce
+		lineageTag: ec000002-1111-2222-3333-ECOMM000002
+
+	measure 'Qtd Ingressos' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[QtdPessoas]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    NOT Limber_Vendas[Categoria] IN {"Aluguel de Boia - LOCAL", "Aluguel de Armários", "Pó Colorido"},
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: E-commerce
+		lineageTag: ec000003-1111-2222-3333-ECOMM000003
+
+	measure 'Ticket Médio por Pedido' = DIVIDE([Receita Ingressos], [Pedidos Confirmados])
+		formatString: R$ #,##0.00
+		displayFolder: E-commerce
+		lineageTag: ec000004-1111-2222-3333-ECOMM000004
+
+	measure 'ROAS Ingressos' =
+			VAR _receita = [Receita Ingressos]
+			VAR _investimento = [Total Investimento Ads]
+			RETURN
+			    IF(
+			        _receita > 0 && _investimento > 0,
+			        DIVIDE(_receita, _investimento),
+			        BLANK()
+			    )
+		formatString: 0.00"x"
+		displayFolder: E-commerce
+		lineageTag: ec000005-1111-2222-3333-ECOMM000005
+
+	measure 'Receita Adulto' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[ValorUnitario]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    Limber_Vendas[Categoria] = "Adulto",
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: R$ #,##0.00
+		displayFolder: E-commerce\Categorias
+		lineageTag: ec000006-1111-2222-3333-ECOMM000006
+
+	measure 'Receita Infantil' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[ValorUnitario]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    Limber_Vendas[Categoria] = "Infantil",
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: R$ #,##0.00
+		displayFolder: E-commerce\Categorias
+		lineageTag: ec000007-1111-2222-3333-ECOMM000007
+
+	measure 'Receita Kids' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[ValorUnitario]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    Limber_Vendas[Categoria] = "Kids",
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: R$ #,##0.00
+		displayFolder: E-commerce\Categorias
+		lineageTag: ec000008-1111-2222-3333-ECOMM000008
+
+	measure 'Qtd Adulto' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[QtdPessoas]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    Limber_Vendas[Categoria] = "Adulto",
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: E-commerce\Categorias
+		lineageTag: ec000009-1111-2222-3333-ECOMM000009
+
+	measure 'Qtd Infantil' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[QtdPessoas]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    Limber_Vendas[Categoria] = "Infantil",
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: E-commerce\Categorias
+		lineageTag: ec000010-1111-2222-3333-ECOMM000010
+
+	measure 'Qtd Kids' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[QtdPessoas]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    Limber_Vendas[Categoria] = "Kids",
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: E-commerce\Categorias
+		lineageTag: ec000011-1111-2222-3333-ECOMM000011
+
+	/// GA ROAS no ano máximo selecionado — para gráfico semanal sem mix de anos.
+	measure 'Chart GA ROAS' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _inv = CALCULATE([_GA Invest Bruto], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _rec = CALCULATE(SUM(Google_Ads_Campanhas[conversions_value]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			RETURN IF(_inv > 0 && _rec > 0, DIVIDE(_rec, _inv), BLANK())
+		formatString: 0.00"x"
+		displayFolder: Gráficos
+		lineageTag: chart-garoas01-4c76-a3b9-000900001111
+
+	/// Meta Receita Ads no ano máximo selecionado — para gráficos mensais sem mix de anos.
+	measure 'Meta Receita' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN CALCULATE(SUM(Meta_Ads_Campanhas[meta_revenue]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+		formatString: R$ #,##0.00
+		displayFolder: Gráficos
+		lineageTag: chart-metarec01-4c76-a3b9-001000001111
+
+	/// Meta Leads no ano máximo selecionado — para gráficos mensais sem mix de anos.
+	measure 'Chart Meta Leads' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN CALCULATE(SUM(Meta_Ads_Campanhas[leads]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+		formatString: #,##0
+		displayFolder: Gráficos
+		lineageTag: chart-metalea01-4c76-a3b9-001100001111
+
+	/// Meta Purchases no ano máximo selecionado — para gráficos mensais sem mix de anos.
+	measure 'Chart Meta Purchases' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN CALCULATE(SUM(Meta_Ads_Campanhas[purchases]), REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+		formatString: #,##0
+		displayFolder: Gráficos
+		lineageTag: chart-metapur01-4c76-a3b9-001200001111
+
+	/// Meta Investimento do ano anterior ao máximo selecionado — para gráfico YoY Meta.
+	measure 'Meta Invest Ano Ant' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN CALCULATE([Meta Investimento Total], REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1)
+		formatString: R$ #,##0.00
+		displayFolder: Gráficos
+		lineageTag: chart-metaant01-4c76-a3b9-001300001111
+
+	/// FB Views Página do ano anterior — para comparativo YoY mesmo período.
+	measure 'FB Views Página Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_FB[valor]),
+			    Meta_Organico_FB[metrica] = "page_views_total",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1,
+			    '01_Calendário'[MêsNúmero] <= _mesMax
+			)
+		formatString: #,##0
+		displayFolder: Orgânico FB\Comparativos
+		lineageTag: orgfb-viewspg-aa01-4c76-VWPG00000001
+
+	/// Delta YoY de Views Página FB — mesmo período (YTD vs YTD).
+	measure 'FB Views Página ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			VAR _cy = CALCULATE(SUM(Meta_Organico_FB[valor]), Meta_Organico_FB[metrica] = "page_views_total", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = CALCULATE(SUM(Meta_Organico_FB[valor]), Meta_Organico_FB[metrica] = "page_views_total", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Orgânico FB
+		lineageTag: orgfb-viewspg-bb02-4c76-VWPG00000002
+
+	/// FB Vídeo Views do ano anterior — para comparativo YoY mesmo período.
+	measure 'FB Vídeo Views Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_FB[valor]),
+			    Meta_Organico_FB[metrica] = "page_video_views",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1,
+			    '01_Calendário'[MêsNúmero] <= _mesMax
+			)
+		formatString: #,##0
+		displayFolder: Orgânico FB\Comparativos
+		lineageTag: orgfb-vidvw-aa01-4c76-VID000000001
+
+	/// Delta YoY de Vídeo Views FB — mesmo período (YTD vs YTD).
+	measure 'FB Vídeo Views ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			VAR _cy = CALCULATE(SUM(Meta_Organico_FB[valor]), Meta_Organico_FB[metrica] = "page_video_views", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = CALCULATE(SUM(Meta_Organico_FB[valor]), Meta_Organico_FB[metrica] = "page_video_views", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Orgânico FB
+		lineageTag: orgfb-vidvw-bb02-4c76-VID000000002
+
+	/// IG Profile Views do ano anterior — para comparativo YoY mesmo período.
+	measure 'IG Profile Views Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_IG[valor]),
+			    Meta_Organico_IG[metrica] = "profile_views",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1,
+			    '01_Calendário'[MêsNúmero] <= _mesMax
+			)
+		formatString: #,##0
+		displayFolder: Orgânico IG\Comparativos
+		lineageTag: orgig-profvw-aa01-4c76-PROF0000001
+
+	/// Delta YoY de Profile Views IG — mesmo período (YTD vs YTD).
+	measure 'IG Profile Views ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			VAR _cy = CALCULATE(SUM(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "profile_views", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = CALCULATE(SUM(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "profile_views", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Orgânico IG
+		lineageTag: orgig-profvw-bb02-4c76-PROF0000002
+
+	/// IG Website Clicks do ano anterior — para comparativo YoY mesmo período.
+	measure 'IG Website Clicks Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_IG[valor]),
+			    Meta_Organico_IG[metrica] = "website_clicks",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1,
+			    '01_Calendário'[MêsNúmero] <= _mesMax
+			)
+		formatString: #,##0
+		displayFolder: Orgânico IG\Comparativos
+		lineageTag: orgig-webclk-aa01-4c76-WCLK0000001
+
+	/// Delta YoY de Website Clicks IG — mesmo período (YTD vs YTD).
+	measure 'IG Website Clicks ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			VAR _cy = CALCULATE(SUM(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "website_clicks", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = CALCULATE(SUM(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "website_clicks", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Orgânico IG
+		lineageTag: orgig-webclk-bb02-4c76-WCLK0000002
+
+	/// Receita por dia bom — normaliza a receita pelo clima favorável.
+	measure 'Receita por Dia Bom' = DIVIDE([Receita Limber], [Clima Dias Bons Parque])
+		formatString: "R$" #,##0.00
+		displayFolder: Clima × Performance
+		lineageTag: clima-rec-dd01-4c76-RECDB000001
+
+	/// Investimento por dia bom — custo real por dia favorável de parque.
+	measure 'Investimento por Dia Bom' = DIVIDE([Total Investimento Ads], [Clima Dias Bons Parque])
+		formatString: "R$" #,##0.00
+		displayFolder: Clima × Performance
+		lineageTag: clima-inv-dd01-4c76-INVDB000001
+
+	/// Classificação textual do clima mensal com base no percentual de dias bons.
+	measure 'Clima Categoria' =
+			SWITCH(
+				TRUE(),
+				[Clima % Dias Bons] >= 0.7, "Ótimo",
+				[Clima % Dias Bons] >= 0.5, "Bom",
+				[Clima % Dias Bons] >= 0.3, "Regular",
+				"Ruim"
+			)
+		displayFolder: Clima × Performance
+		lineageTag: clima-cat-dd01-4c76-CATEG000001
+
+	/// Receita de todas as categorias de acesso não exibidas nos cards Adulto/Infantil/Kids: Especial, Idosos, Teens, Minha Mãe Paga Meia, Ingresso, Ingresso de Acesso.
+	measure 'Receita Outros Ingressos' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[ValorUnitario]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    Limber_Vendas[Categoria] IN {"Especial", "Idosos", "Teens", "Minha Mãe Paga Meia", "Ingresso", "Ingresso de Acesso"},
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: R$ #,##0.00
+		displayFolder: E-commerce\Categorias
+		lineageTag: ec000012-1111-2222-3333-ECOMM000012
+
+	/// Quantidade de pessoas nas categorias de acesso não exibidas nos cards principais.
+	measure 'Qtd Outros Ingressos' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[QtdPessoas]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    Limber_Vendas[Categoria] IN {"Especial", "Idosos", "Teens", "Minha Mãe Paga Meia", "Ingresso", "Ingresso de Acesso"},
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: E-commerce\Categorias
+		lineageTag: ec000013-1111-2222-3333-ECOMM000013
+
+	/// Diagnóstico: mostra a data mais antiga de venda aprovada no ano anterior ao selecionado.
+	/// Use em um card. Se aparecer depois de 01/01 do ano anterior, há dados históricos incompletos.
+	measure 'Diagnóstico: Início Dados AA' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			VAR _min_date = CALCULATE(
+			    MIN(Limber_Vendas[DateKey]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    REMOVEFILTERS('01_Calendário'),
+			    '01_Calendário'[Ano] = _ano - 1
+			)
+			VAR _max_date = CALCULATE(
+			    MAX(Limber_Vendas[DateKey]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    REMOVEFILTERS('01_Calendário'),
+			    '01_Calendário'[Ano] = _ano - 1
+			)
+			VAR _meses = CALCULATE(
+			    DISTINCTCOUNT('01_Calendário'[MêsNúmero]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    REMOVEFILTERS('01_Calendário'),
+			    '01_Calendário'[Ano] = _ano - 1
+			)
+			RETURN
+			IF(
+			    ISBLANK(_min_date),
+			    "⚠ Sem dados para " & (_ano - 1),
+			    FORMAT(_min_date, "dd/MM/yyyy") & " → " & FORMAT(_max_date, "dd/MM/yyyy") &
+			    " (" & _meses & " meses)"
+			)
+		displayFolder: E-commerce\Diagnóstico
+		lineageTag: ec000110-1111-2222-3333-ECOMM000110
+
+	/// Receita de produtos físicos (aluguel de equipamentos e consumíveis). Deve aparecer em card separado acima de Outros Ingressos.
+	measure 'Receita Produtos' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[ValorUnitario]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    Limber_Vendas[Categoria] IN {"Aluguel de Armários", "Aluguel de Boia - LOCAL", "Pó Colorido"},
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: R$ #,##0.00
+		displayFolder: E-commerce\Categorias
+		lineageTag: ec000014-1111-2222-3333-ECOMM000014
+
+	/// Quantidade de itens de produtos físicos alugados (armários + boias).
+	measure 'Qtd Produtos' =
+			VAR _anos_sel = ALLSELECTED('01_Calendário'[Ano])
+			VAR _ano = IF(COUNTROWS(_anos_sel) = 1, MINX(_anos_sel, '01_Calendário'[Ano]), YEAR(TODAY()))
+			RETURN
+			CALCULATE(
+			    SUM(Limber_Vendas[QtdArmario]) + SUM(Limber_Vendas[QtdBoia]),
+			    Limber_Vendas[Status] = "Aprovada",
+			    KEEPFILTERS('01_Calendário'[Ano] = _ano)
+			)
+		formatString: #,##0
+		displayFolder: E-commerce\Categorias
+		lineageTag: ec000015-1111-2222-3333-ECOMM000015
+
+	/// Engajamento FB fixo para 2024 — não filtrado pelo slicer Ano.
+	measure 'FB Engaj 2024' =
+			CALCULATE(
+			    CALCULATE(
+			        SUM(Meta_Organico_FB[valor]),
+			        Meta_Organico_FB[metrica] = "page_post_engagements"
+			    ),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = 2024
+			)
+		formatString: #,##0
+		displayFolder: Orgânico FB\YoY
+		lineageTag: 5500aaaa-bbbb-cccc-dddd-FB0000000020
+
+	/// Engajamento FB fixo para 2025 — não filtrado pelo slicer Ano.
+	measure 'FB Engaj 2025' =
+			CALCULATE(
+			    CALCULATE(
+			        SUM(Meta_Organico_FB[valor]),
+			        Meta_Organico_FB[metrica] = "page_post_engagements"
+			    ),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = 2025
+			)
+		formatString: #,##0
+		displayFolder: Orgânico FB\YoY
+		lineageTag: 5500aaaa-bbbb-cccc-dddd-FB0000000021
+
+	/// Engajamento FB fixo para 2026 — não filtrado pelo slicer Ano.
+	measure 'FB Engaj 2026' =
+			CALCULATE(
+			    CALCULATE(
+			        SUM(Meta_Organico_FB[valor]),
+			        Meta_Organico_FB[metrica] = "page_post_engagements"
+			    ),
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = 2026
+			)
+		formatString: #,##0
+		displayFolder: Orgânico FB\YoY
+		lineageTag: 5500aaaa-bbbb-cccc-dddd-FB0000000022
+
+	/// Reações totais na página Facebook (page_actions_post_reactions_total). Filtrado para o ano mais recente selecionado via _anoMax.
+	measure 'FB Reações' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_FB[valor]),
+			    Meta_Organico_FB[metrica] = "page_actions_post_reactions_total",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+		formatString: #,##0
+		displayFolder: Orgânico FB
+		lineageTag: fb999001-aaaa-bbbb-cccc-000000000001
+
+	/// Taxa de engajamento — Engajamento dividido por Alcance Único.
+	measure 'FB Taxa Engajamento' = DIVIDE([FB Engajamento], [FB Alcance Único])
+		formatString: 0.00%
+		displayFolder: Orgânico FB
+		lineageTag: fb999001-aaaa-bbbb-cccc-000000000002
+
+	/// Alcance único formatado para cards (155 Mil / 2,3 Mi).
+	measure '_FB Alcance BR' =
+			VAR _v = [FB Alcance Único]
+			RETURN
+			SWITCH(TRUE(),
+			    _v >= 1000000, FORMAT(_v/1000000, "0.0") & " Mi",
+			    _v >= 1000, FORMAT(_v/1000, "0") & " Mil",
+			    FORMAT(_v, "0")
+			)
+		displayFolder: Orgânico FB\Formatadas
+		lineageTag: fb999001-aaaa-bbbb-cccc-000000000010
+
+	/// Engajamento formatado para cards (#,##0).
+	measure '_FB Engaj BR' = FORMAT([FB Engajamento], "#,##0")
+		displayFolder: Orgânico FB\Formatadas
+		lineageTag: fb999001-aaaa-bbbb-cccc-000000000011
+
+	/// Vídeo Views formatado para cards (155 Mil / 2,3 Mi).
+	measure '_FB Video BR' =
+			VAR _v = [FB Vídeo Views]
+			RETURN
+			SWITCH(TRUE(),
+			    _v >= 1000000, FORMAT(_v/1000000, "0.0") & " Mi",
+			    _v >= 1000, FORMAT(_v/1000, "0") & " Mil",
+			    FORMAT(_v, "0")
+			)
+		displayFolder: Orgânico FB\Formatadas
+		lineageTag: fb999001-aaaa-bbbb-cccc-000000000012
+
+	/// Saldo de seguidores com sinal explícito (+123 / -45).
+	measure '_FB Saldo BR' =
+			VAR _v = [FB Saldo Seguidores]
+			RETURN
+			IF(
+			    ISBLANK(_v),
+			    BLANK(),
+			    IF(_v >= 0, "+" & FORMAT(_v, "#,##0"), FORMAT(_v, "#,##0"))
+			)
+		displayFolder: Orgânico FB\Formatadas
+		lineageTag: fb999001-aaaa-bbbb-cccc-000000000013
+
+	/// Reações totais formatadas para cards (#,##0).
+	measure '_FB Reações BR' = FORMAT([FB Reações], "#,##0")
+		displayFolder: Orgânico FB\Formatadas
+		lineageTag: fb999001-aaaa-bbbb-cccc-000000000014
+
+	/// Taxa de engajamento formatada para cards (0.00%).
+	measure '_FB Taxa Engaj BR' = FORMAT([FB Taxa Engajamento], "0.00%")
+		displayFolder: Orgânico FB\Formatadas
+		lineageTag: fb999001-aaaa-bbbb-cccc-000000000015
+
+	/// FB Reações do ano anterior — para comparativo YoY mesmo período.
+	measure 'FB Reações Ano Anterior' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_FB[valor]),
+			    Meta_Organico_FB[metrica] = "page_actions_post_reactions_total",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax - 1,
+			    '01_Calendário'[MêsNúmero] <= _mesMax
+			)
+		formatString: #,##0
+		displayFolder: Orgânico FB
+		lineageTag: fb999001-aaaa-bbbb-cccc-000000000020
+
+	measure 'FB Reações ΔYoY' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
+			VAR _cy = CALCULATE(SUM(Meta_Organico_FB[valor]), Meta_Organico_FB[metrica] = "page_actions_post_reactions_total", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = CALCULATE(SUM(Meta_Organico_FB[valor]), Meta_Organico_FB[metrica] = "page_actions_post_reactions_total", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Orgânico FB
+		lineageTag: fb999001-aaaa-bbbb-cccc-000000000021
+
+	/// Total de seguidores FB — último snapshot disponível, ignorando o slicer de período.
+	measure 'FB Total Seguidores' =
+			VAR _ultimaData =
+			    CALCULATE(
+			        MAX(Meta_Organico_FB[DateKey]),
+			        REMOVEFILTERS('01_Calendário'),
+			        Meta_Organico_FB[metrica] = "page_followers_count"
+			    )
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_FB[valor]),
+			    REMOVEFILTERS('01_Calendário'),
+			    Meta_Organico_FB[metrica] = "page_followers_count",
+			    Meta_Organico_FB[DateKey] = _ultimaData
+			)
+		formatString: #,##0
+		displayFolder: Orgânico FB
+		lineageTag: 5500aaaa-bbbb-cccc-dddd-FB0000000030
+
+	/// Total de fãs FB (curtidores da página) — último snapshot disponível.
+	measure 'FB Total Fãs' =
+			VAR _ultimaData =
+			    CALCULATE(
+			        MAX(Meta_Organico_FB[DateKey]),
+			        REMOVEFILTERS('01_Calendário'),
+			        Meta_Organico_FB[metrica] = "page_fan_count"
+			    )
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_FB[valor]),
+			    REMOVEFILTERS('01_Calendário'),
+			    Meta_Organico_FB[metrica] = "page_fan_count",
+			    Meta_Organico_FB[DateKey] = _ultimaData
+			)
+		formatString: #,##0
+		displayFolder: Orgânico FB
+		lineageTag: 5500aaaa-bbbb-cccc-dddd-FB0000000031
+
+	/// Variação % de seguidores FB nos últimos 30 dias vs os 30 dias anteriores.
+	measure 'FB Seg Δ30d' =
+			VAR _ultimaData =
+			    CALCULATE(
+			        MAX(Meta_Organico_FB[DateKey]),
+			        REMOVEFILTERS('01_Calendário'),
+			        Meta_Organico_FB[metrica] = "page_followers_count"
+			    )
+			VAR _atual =
+			    CALCULATE(
+			        SUM(Meta_Organico_FB[valor]),
+			        REMOVEFILTERS('01_Calendário'),
+			        Meta_Organico_FB[metrica] = "page_followers_count",
+			        Meta_Organico_FB[DateKey] = _ultimaData
+			    )
+			VAR _anterior =
+			    CALCULATE(
+			        SUM(Meta_Organico_FB[valor]),
+			        REMOVEFILTERS('01_Calendário'),
+			        Meta_Organico_FB[metrica] = "page_followers_count",
+			        Meta_Organico_FB[DateKey] = _ultimaData - 30
+			    )
+			RETURN DIVIDE(_atual - _anterior, _anterior)
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Orgânico FB
+		lineageTag: 5500aaaa-bbbb-cccc-dddd-FB0000000032
+
+	/// IG Cliques Bio — profile_links_taps (cliques no link da bio do perfil).
+	measure 'IG Cliques Bio' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_IG[valor]),
+			    Meta_Organico_IG[metrica] = "profile_links_taps",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+		formatString: #,##0
+		displayFolder: Orgânico IG
+		lineageTag: orgig-bioclk-cc01-4c76-BIOC0000001
+
+	/// IG Views — total de views de vídeos e reels via API orgânica.
+	measure 'IG Views' =
+			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
+			RETURN
+			CALCULATE(
+			    SUM(Meta_Organico_IG[valor]),
+			    Meta_Organico_IG[metrica] = "views",
+			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    '01_Calendário'[Ano] = _anoMax
+			)
+		formatString: #,##0
+		displayFolder: Orgânico IG
+		lineageTag: orgig-views-cc02-4c76-VIEW0000001
+
+	/// Delta YoY de Interações IG — YTD atual vs YTD ano anterior.
+	measure 'IG Interações ΔYoY' =
+			VAR _cy = [IG Interações]
+			VAR _ly = [IG Interações Ano Anterior]
+			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Orgânico IG
+		lineageTag: orgig-inter-bb02-4c76-INTB0000002
+
+	/// Alcance IG fixo 2024 para gráfico YoY — ignora slicer Ano por design.
+	measure 'IG Alcance 2024' =
+			CALCULATE(
+			    SUM(Meta_Organico_IG[valor]),
+			    Meta_Organico_IG[metrica] = "reach",
+			    '01_Calendário'[Ano] = 2024
+			)
+		formatString: #,##0
+		displayFolder: Orgânico IG\YoY
+		lineageTag: orgig-alc24-cc01-4c76-ALC20240001
+
+	/// Alcance IG fixo 2025 para gráfico YoY — ignora slicer Ano por design.
+	measure 'IG Alcance 2025' =
+			CALCULATE(
+			    SUM(Meta_Organico_IG[valor]),
+			    Meta_Organico_IG[metrica] = "reach",
+			    '01_Calendário'[Ano] = 2025
+			)
+		formatString: #,##0
+		displayFolder: Orgânico IG\YoY
+		lineageTag: orgig-alc25-cc01-4c76-ALC20250001
+
+	/// Alcance IG fixo 2026 para gráfico YoY — ignora slicer Ano por design.
+	measure 'IG Alcance 2026' =
+			CALCULATE(
+			    SUM(Meta_Organico_IG[valor]),
+			    Meta_Organico_IG[metrica] = "reach",
+			    '01_Calendário'[Ano] = 2026
+			)
+		formatString: #,##0
+		displayFolder: Orgânico IG\YoY
+		lineageTag: orgig-alc26-cc01-4c76-ALC20260001
+
+	/// Taxa de engajamento FB ano anterior — comparativo YoY.
+	measure 'FB Taxa Engajamento Ano Anterior' = DIVIDE([FB Engajamento Ano Anterior], [FB Alcance Único Ano Anterior])
+		formatString: 0.00%
+		displayFolder: Orgânico FB
+		lineageTag: fb999001-aaaa-bbbb-cccc-000000000003
+
+	/// Taxa de engajamento IG — Interações divididas por Alcance.
+	measure 'IG Taxa Engajamento' = DIVIDE([IG Interações], [IG Alcance])
+		formatString: 0.00%
+		displayFolder: Orgânico IG
+		lineageTag: orgig-taxa-cc03-4c76-TAXA0000001
+
+	/// Taxa de engajamento IG ano anterior — comparativo YoY.
+	measure 'IG Taxa Engajamento Ano Anterior' = DIVIDE([IG Interações Ano Anterior], [IG Alcance Ano Anterior])
+		formatString: 0.00%
+		displayFolder: Orgânico IG
+		lineageTag: orgig-taxa-cc04-4c76-TAXA0000002
+
+	column Value
+		lineageTag: f7d2cc73-245c-4e9d-8af1-68b56a029069
+		sourceColumn: [Value]
+
+	partition 00_Médidas = calculated
+		mode: import
+		source = {1}
+

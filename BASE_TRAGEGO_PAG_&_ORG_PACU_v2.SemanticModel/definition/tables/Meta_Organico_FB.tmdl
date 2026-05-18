@@ -1,0 +1,61 @@
+/// Métricas orgânicas diárias da página Facebook (Termas Pacu). Fonte: Meta Graph API v21.0 via extractor local.
+table Meta_Organico_FB
+	lineageTag: 38366323-81a1-4845-bad3-34590b5f4255
+
+	column data
+		dataType: string
+		lineageTag: 096f62df-3034-484c-a155-b3f732a4876b
+		sourceColumn: data
+
+	column metrica
+		dataType: string
+		lineageTag: 6e8e890d-b111-47df-a953-fd3fc5b1f7d5
+		sourceColumn: metrica
+
+	column valor
+		dataType: double
+		lineageTag: 8e3b62d0-7e19-4082-82cc-f2ba1e8d9fe9
+		sourceColumn: valor
+
+	column periodo
+		dataType: string
+		lineageTag: 73b9d06f-c7ee-4576-b472-14584d37252f
+		sourceColumn: periodo
+
+	column fonte
+		dataType: string
+		lineageTag: 93cf87dd-a1ce-4d4c-aad4-87441c0d630d
+		sourceColumn: fonte
+
+	column DateKey = DATE(LEFT(Meta_Organico_FB[data], 4), MID(Meta_Organico_FB[data], 6, 2), MID(Meta_Organico_FB[data], 9, 2))
+		dataType: dateTime
+		isHidden
+		lineageTag: f3417c06-640d-4265-a145-bd755d62e2eb
+
+	partition Meta_Organico_FB = m
+		mode: import
+		source =
+				let
+				    Url = "https://docs.google.com/spreadsheets/d/" & pSpreadsheetId & "/gviz/tq?tqx=out:csv&sheet=Meta_Organico_FB&headers=0&locale=en_US",
+				    Csv = Csv.Document(Web.Contents(Url), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promovido = Table.PromoteHeaders(Csv, [PromoteAllScalars=true]),
+				    // Renomear colunas por posicao pois gviz/tq pode adicionar sufixos nos headers
+				    Cols = Table.ColumnNames(Promovido),
+				    Renomeado = Table.RenameColumns(Promovido, {
+				        {Cols{0}, "data"},
+				        {Cols{1}, "metrica"},
+				        {Cols{2}, "valor"}
+				    }),
+				    Tipado = Table.TransformColumnTypes(Renomeado, {{"data", type text}, {"metrica", type text}, {"valor", type number}}, "pt-BR"),
+				    ComPeriodo = Table.AddColumn(Tipado, "periodo", each "day", type text),
+				    ComFonte = Table.AddColumn(ComPeriodo, "fonte", each "Meta Graph API", type text),
+				    RemoveErrors = Table.RemoveRowsWithErrors(ComFonte),
+				    TodayStr = Date.ToText(Date.From(DateTime.LocalNow()), "yyyy-MM-dd"),
+				    FilterFuture = Table.SelectRows(RemoveErrors, each [data] <= TodayStr)
+				in
+				    FilterFuture
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

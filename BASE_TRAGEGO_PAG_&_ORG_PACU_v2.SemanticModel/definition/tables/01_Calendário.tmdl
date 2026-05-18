@@ -1,0 +1,203 @@
+/// Tabela calendário central do modelo. Conectada a: Oportunidades (dateCreated), Google Ads (date), Meta Ads (date_start), WA Analytics (startTime). Contatos usa USERELATIONSHIP.
+/// COLUNAS DE FILTRO DISPONÍVEIS:
+/// • Date — data exata (use em segmentadores de intervalo)
+/// • MêsAno — rótulo curto ex: Abr/25 (ideal para eixos de gráficos)
+/// • AnoMes — rótulo mês/ano ex: abr/2025
+/// • Ano, Mês, MesNúmero — filtros individuais por ano/mês
+/// • Trimestre / AnoTrimestre — agrupamento trimestral
+/// • Ano-Trimestre Label — rótulo legível: 2025 T1
+/// • Semana Label — Sem 14/25 (para análise semanal de campanhas)
+/// • DiaDaSemana / Dia — agrupamento por dia
+/// • Período Relativo — Mês Atual / Mês Anterior / 2 Meses Atrás / Trimestre Passado etc.
+/// • É Mês Atual — flag Sim/Não para filtros de card KPI
+/// • É Últimos 30 Dias — flag para visão de curto prazo
+/// • É Últimos 90 Dias — flag para visão trimestral móvel
+/// MEDIDAS COMPARATIVAS DISPONÍVEIS (pasta Comparativos):
+/// MoM: Investimento ΔMoM, Vendas ΔMoM, Receita ΔMoM, ROAS ΔMoM, CAC ΔMoM, GA ΔMoM, Meta ΔMoM, CPL Real ΔMoM
+/// YoY: Investimento ΔYoY
+/// 30d vs 30d: Contatos Δ, Investimento Δ
+/// Resumo: Painel Comparativo Mês (texto para card de cabeçalho)
+table 01_Calendário
+	lineageTag: 91b11b3c-bde4-4030-a3b4-bf56d6e0839d
+
+	column Date
+		formatString: Short Date
+		lineageTag: e13bc30f-d04f-4194-9db7-17dea27dc6ec
+		summarizeBy: none
+		sourceColumn: [Date]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Mês
+		lineageTag: 4f55a581-edc2-4afa-acda-7e4f47d46006
+		summarizeBy: none
+		sourceColumn: [Mês]
+		sortByColumn: MêsNúmero
+
+		annotation SummarizationSetBy = Automatic
+
+	column Ano
+		formatString: 0
+		lineageTag: 821e8ef6-42e6-42d6-bbbf-4a281084c0d1
+		summarizeBy: none
+		sourceColumn: [Ano]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Trimestre
+		lineageTag: 6f77b1fd-6c8b-48ad-a1e6-7d4b1cff7768
+		summarizeBy: none
+		sourceColumn: [Trimestre]
+
+		annotation SummarizationSetBy = Automatic
+
+	column DiaDaSemana
+		lineageTag: 3c474e92-8d5c-44ee-a41d-4549715da474
+		summarizeBy: none
+		sourceColumn: [DiaDaSemana]
+		sortByColumn: DiaDaSemanaNúmero
+
+		annotation SummarizationSetBy = Automatic
+
+	column Dia
+		formatString: 0
+		lineageTag: b75e50e6-3e64-4033-a4b1-2af140a28617
+		summarizeBy: none
+		sourceColumn: [Dia]
+
+		annotation SummarizationSetBy = Automatic
+
+	column MêsNúmero
+		formatString: 0
+		lineageTag: 54989e1d-8bfa-4bb9-965c-06b3ecc6be7e
+		summarizeBy: none
+		sourceColumn: [MêsNúmero]
+
+		annotation SummarizationSetBy = Automatic
+
+	column SemanaDoAno
+		formatString: 0
+		lineageTag: d9598051-08e2-4a75-b60b-cfd6496b4b16
+		summarizeBy: none
+		sourceColumn: [SemanaDoAno]
+
+		annotation SummarizationSetBy = Automatic
+
+	column DiaDaSemanaNúmero = WEEKDAY('01_Calendário'[Date], 2)
+		dataType: int64
+		formatString: 0
+		lineageTag: 6e75d498-52b3-48c5-ab6e-6e08daf98e55
+		summarizeBy: none
+
+	column AnoMes = FORMAT('01_Calendário'[Date], "MMM/yyyy")
+		dataType: string
+		lineageTag: f5fe47d6-5cff-48e9-ad92-cd22287d04e8
+		summarizeBy: none
+		sortByColumn: AnoMesNúmero
+
+	column AnoMesNúmero = YEAR('01_Calendário'[Date]) * 100 + MONTH('01_Calendário'[Date])
+		dataType: int64
+		formatString: 0
+		lineageTag: 8461b988-bc18-44c1-966a-b37d31dd6be6
+		summarizeBy: none
+
+	column AnoTrimestre = FORMAT('01_Calendário'[Date], "yyyy") & " T" & QUARTER('01_Calendário'[Date])
+		dataType: string
+		lineageTag: 0905620d-ac00-4141-81c1-7e8936423618
+		summarizeBy: none
+		sortByColumn: AnoTrimestreNúmero
+
+	column AnoTrimestreNúmero = YEAR('01_Calendário'[Date]) * 10 + QUARTER('01_Calendário'[Date])
+		dataType: int64
+		formatString: 0
+		lineageTag: a072aa59-abfa-4a0c-8f02-7af5f1c81550
+		summarizeBy: none
+
+	/// Rótulo curto para filtros: Jan/25, Fev/25... Ideal para eixos de gráficos.
+	column MêsAno = FORMAT('01_Calendário'[Date], "MMM/YY")
+		dataType: string
+		lineageTag: 4e2cd553-1573-4bde-a2f1-2ad435aa7aa6
+		sortByColumn: AnoMesNúmero
+
+	/// Identifica se a data pertence ao mês corrente. Usado em filtros rápidos de cards KPI.
+	column 'É Mês Atual' = IF(FORMAT('01_Calendário'[Date],"YYYYMM") = FORMAT(TODAY(),"YYYYMM"), "Mês Atual", "Outros")
+		dataType: string
+		lineageTag: b16c9d3a-0955-49e6-8187-65b778b3c563
+
+	/// Flag para filtrar os últimos 30 dias. Usado em filtros de visões de curto prazo.
+	column 'É Últimos 30 Dias' = IF('01_Calendário'[Date] >= TODAY() - 30 && '01_Calendário'[Date] <= TODAY(), "Sim", "Não")
+		dataType: string
+		lineageTag: c426c167-4827-4264-87b1-91354ba83b76
+
+	/// Flag para filtrar os últimos 90 dias (trimestre móvel).
+	column 'É Últimos 90 Dias' = IF('01_Calendário'[Date] >= TODAY() - 90 && '01_Calendário'[Date] <= TODAY(), "Sim", "Não")
+		dataType: string
+		lineageTag: 37a14fdf-f8b1-4fd1-bf36-c142c32d7379
+
+	/// Rótulo de semana para eixos: Sem 01/25, Sem 14/25... Ideal para análise semanal de campanhas.
+	column 'Semana Label' = "Sem " & FORMAT('01_Calendário'[SemanaDoAno], "00") & "/" & FORMAT('01_Calendário'[Date], "YY")
+		dataType: string
+		lineageTag: 16f32c87-09c6-4e68-8bef-a921ab921f38
+		sortByColumn: AnoMesNúmero
+
+	/// Classifica cada data em período relativo ao dia atual. Facilita filtros dinâmicos como 'Mês Anterior', '3 Meses Atrás' etc.
+	column 'Período Relativo' =
+			VAR Hoje = TODAY()
+			VAR DataBase = '01_Calendário'[Date]
+			VAR DifMeses = DATEDIFF(DataBase, Hoje, MONTH)
+			RETURN
+			SWITCH(TRUE(),
+			    DifMeses = 0, "Mês Atual",
+			    DifMeses = 1, "Mês Anterior",
+			    DifMeses = 2, "2 Meses Atrás",
+			    DifMeses = 3, "3 Meses Atrás",
+			    DifMeses >= 4 && DifMeses <= 6, "Trimestre Passado",
+			    DifMeses >= 7 && DifMeses <= 12, "Semestre Passado",
+			    DifMeses > 12, "Más de 1 Ano",
+			    DifMeses < 0, "Futuro"
+			)
+		dataType: string
+		lineageTag: 11cda0c1-a271-4d6c-a40b-76b47a09587f
+
+	/// Alias legível de AnoTrimestre para uso em filtros e segmentadores. Ex: 2025 T1.
+	column 'Ano-Trimestre Label' = '01_Calendário'[AnoTrimestre]
+		dataType: string
+		lineageTag: d31cd53e-0739-4a83-91f7-e69613da58e4
+		sortByColumn: AnoTrimestreNúmero
+
+	hierarchy 'Drill Data'
+		lineageTag: 06ae9eb3-f39d-4abb-9f37-83a9786b19f8
+
+		level Ano
+			lineageTag: 2012fecf-d7bd-4b70-a69b-a80eac95846b
+			column: Ano
+
+		level Trimestre
+			lineageTag: 42afafb2-0a34-4e08-94e9-47f672878069
+			column: Trimestre
+
+		level Mês
+			lineageTag: 57cfcaa3-e3e1-4792-bb33-30a5ea8b33ed
+			column: Mês
+
+		level Dia
+			lineageTag: 10fd0357-8d56-4535-873d-385ba6dbb213
+			column: Dia
+
+	partition 01_Calendário = calculated
+		mode: import
+		source =
+				
+				ADDCOLUMNS(
+				    CALENDAR(DATE(2023,1,1), DATE(2030,12,31)),
+				    "Mês", FORMAT([Date], "MMMM"),
+				    "Ano", YEAR([Date]),
+				    "Trimestre", "T" & QUARTER([Date]),
+				    "DiaDaSemana", FORMAT([Date], "ddd"),
+				    "Dia", DAY([Date]),
+				    "MêsNúmero", MONTH([Date]),
+				    "SemanaDoAno", WEEKNUM([Date], 2)  // 2 = semana começa na segunda-feira
+				)
+
+	annotation PBI_Id = fb1d26102d1a4c4cbeffcc0f5a62697c
+

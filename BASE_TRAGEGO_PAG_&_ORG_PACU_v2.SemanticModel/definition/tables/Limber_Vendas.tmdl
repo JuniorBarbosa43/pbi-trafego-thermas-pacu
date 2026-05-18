@@ -1,0 +1,198 @@
+/// Vendas online via Limber (e-commerce Termas Pacu).
+/// Fonte: Webhook-Ingresso-Limber (Google Sheets).
+/// ATENCAO DEDUPLICACAO:
+/// - 1 Localizador (LB) = N linhas (1 por item/bilhete vendido)
+/// - "Total Liquido" é repetido em todas as linhas do mesmo LB → NÃO somar
+/// - "Valor Unitario" é único por linha → usar para receita
+/// - Filtrar Status = "Aprovada" para receita confirmada
+/// - Filtrar Sistema - Status Oportunidade = "won" como alternativa
+table Limber_Vendas
+	lineageTag: lb000001-1111-2222-3333-LIMBER000001
+
+	column Localizador
+		dataType: string
+		lineageTag: lb000002-1111-2222-3333-LIMBER000002
+		summarizeBy: none
+		sourceColumn: Localizador
+
+	column DataHora
+		dataType: dateTime
+		formatString: dd/MM/yyyy HH:mm:ss
+		lineageTag: lb000003-1111-2222-3333-LIMBER000003
+		summarizeBy: none
+		sourceColumn: DataHora
+
+	column DateKey
+		dataType: dateTime
+		isHidden
+		formatString: Long Date
+		lineageTag: lb000004-1111-2222-3333-LIMBER000004
+		summarizeBy: none
+		sourceColumn: DateKey
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Status
+		dataType: string
+		lineageTag: lb000005-1111-2222-3333-LIMBER000005
+		summarizeBy: none
+		sourceColumn: Status
+
+	column Bilhete
+		dataType: string
+		lineageTag: lb000006-1111-2222-3333-LIMBER000006
+		summarizeBy: none
+		sourceColumn: Bilhete
+
+	column Categoria
+		dataType: string
+		lineageTag: lb000007-1111-2222-3333-LIMBER000007
+		summarizeBy: none
+		sourceColumn: Categoria
+
+	column TotalLiquido
+		dataType: double
+		lineageTag: lb000008-1111-2222-3333-LIMBER000008
+		summarizeBy: sum
+		sourceColumn: TotalLiquido
+
+	column ValorUnitario
+		dataType: double
+		lineageTag: lb000009-1111-2222-3333-LIMBER000009
+		summarizeBy: sum
+		sourceColumn: ValorUnitario
+
+	column Pipeline
+		dataType: string
+		lineageTag: lb000010-1111-2222-3333-LIMBER000010
+		summarizeBy: none
+		sourceColumn: Pipeline
+
+	column StatusOportunidade
+		dataType: string
+		lineageTag: lb000011-1111-2222-3333-LIMBER000011
+		summarizeBy: none
+		sourceColumn: StatusOportunidade
+
+	column QtdBoia
+		dataType: int64
+		lineageTag: lb000012-1111-2222-3333-LIMBER000012
+		summarizeBy: sum
+		sourceColumn: QtdBoia
+
+	column QtdArmario
+		dataType: int64
+		lineageTag: lb000013-1111-2222-3333-LIMBER000013
+		summarizeBy: sum
+		sourceColumn: QtdArmario
+
+	column QtdPessoas
+		dataType: int64
+		lineageTag: lb000014-1111-2222-3333-LIMBER000014
+		summarizeBy: sum
+		sourceColumn: QtdPessoas
+
+	column SequenciaItem
+		dataType: int64
+		lineageTag: lb000015-1111-2222-3333-LIMBER000015
+		summarizeBy: none
+		sourceColumn: SequenciaItem
+
+	column UF
+		dataType: string
+		lineageTag: lb000016-1111-2222-3333-LIMBER000016
+		summarizeBy: none
+		sourceColumn: UF
+
+	column Municipio
+		dataType: string
+		lineageTag: lb000017-1111-2222-3333-LIMBER000017
+		summarizeBy: none
+		sourceColumn: Municipio
+
+	column DataVisita
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: lb000018-1111-2222-3333-LIMBER000018
+		summarizeBy: none
+		sourceColumn: DataVisita
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ValorTotal
+		dataType: double
+		lineageTag: 9b8d4363-351e-409a-a26f-8914ac829f1e
+		summarizeBy: sum
+		sourceColumn: ValorTotal
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition Limber_Vendas = m
+		mode: import
+		source =
+				let
+				    Url = "https://docs.google.com/spreadsheets/d/" & pLimberSpreadsheetId & "/export?format=csv&gid=904815616",
+				    Csv = Csv.Document(
+				        Web.Contents(Url),
+				        [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]
+				    ),
+				    Promovido = Table.PromoteHeaders(Csv, [PromoteAllScalars=true]),
+				    Cols = Table.ColumnNames(Promovido),
+				    Renomeado = Table.RenameColumns(Promovido, {
+				        {Cols{0},  "Localizador"},
+				        {Cols{1},  "DataHora"},
+				        {Cols{2},  "Status"},
+				        {Cols{11}, "TotalLiquido"},
+				        {Cols{31}, "Bilhete"},
+				        {Cols{33}, "Categoria"},
+				        {Cols{38}, "ValorTotal"},
+				        {Cols{39}, "ValorUnitario"},
+				        {Cols{48}, "UF"},
+				        {Cols{49}, "Municipio"},
+				        {Cols{54}, "DataVisita"},
+				        {Cols{64}, "SequenciaItem"},
+				        {Cols{65}, "Pipeline"},
+				        {Cols{68}, "StatusOportunidade"},
+				        {Cols{71}, "QtdPessoas"},
+				        {Cols{76}, "QtdBoia"},
+				        {Cols{77}, "QtdArmario"}
+				    }),
+				    Selecionado = Table.SelectColumns(Renomeado, {
+				        "Localizador", "DataHora", "Status", "TotalLiquido",
+				        "Bilhete", "Categoria", "ValorTotal", "ValorUnitario",
+				        "UF", "Municipio", "DataVisita",
+				        "SequenciaItem", "Pipeline", "StatusOportunidade",
+				        "QtdPessoas", "QtdBoia", "QtdArmario"
+				    }),
+				    TipadoDatas = Table.TransformColumnTypes(Selecionado, {
+				        {"DataHora",  type datetime},
+				        {"DataVisita", type date}
+				    }, "pt-BR"),
+				    Tipado = Table.TransformColumnTypes(TipadoDatas, {
+				        {"Localizador",        type text},
+				        {"Status",             type text},
+				        {"TotalLiquido",       type number},
+				        {"Bilhete",            type text},
+				        {"Categoria",          type text},
+				        {"ValorTotal",         type number},
+				        {"ValorUnitario",      type number},
+				        {"UF",                 type text},
+				        {"Municipio",          type text},
+				        {"SequenciaItem",      Int64.Type},
+				        {"Pipeline",           type text},
+				        {"StatusOportunidade", type text},
+				        {"QtdPessoas",         Int64.Type},
+				        {"QtdBoia",            Int64.Type},
+				        {"QtdArmario",         Int64.Type}
+				    }, "pt-BR"),
+				    ComDateKey = Table.AddColumn(Tipado, "DateKey", each Date.From([DataHora]), type date),
+				    SemErros = Table.RemoveRowsWithErrors(ComDateKey, {"DataHora", "DateKey"})
+				in
+					SemErros
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

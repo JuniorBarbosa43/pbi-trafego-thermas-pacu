@@ -1,0 +1,236 @@
+/// Dados de campanhas do Meta Ads (Facebook/Instagram) - fonte: Google Sheets atualizado diariamente
+table Meta_Ads_Campanhas
+	lineageTag: d4e5f6a7-b8c9-0123-defa-234567890123
+
+	column campaign_id
+		dataType: string
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111101
+		summarizeBy: none
+		sourceColumn: campaign_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column campaign_name
+		dataType: string
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111102
+		summarizeBy: none
+		sourceColumn: campaign_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column date_start
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111103
+		summarizeBy: none
+		sourceColumn: date_start
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column date_stop
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111104
+		summarizeBy: none
+		sourceColumn: date_stop
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column impressions
+		dataType: int64
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111105
+		summarizeBy: sum
+		sourceColumn: impressions
+
+		annotation SummarizationSetBy = Automatic
+
+	column reach
+		dataType: int64
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111106
+		summarizeBy: sum
+		sourceColumn: reach
+
+		annotation SummarizationSetBy = Automatic
+
+	column clicks
+		dataType: int64
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111107
+		summarizeBy: sum
+		sourceColumn: clicks
+
+		annotation SummarizationSetBy = Automatic
+
+	column spend
+		dataType: double
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111108
+		summarizeBy: sum
+		sourceColumn: spend
+
+		annotation SummarizationSetBy = Automatic
+
+	column ctr
+		dataType: double
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111109
+		summarizeBy: sum
+		sourceColumn: ctr
+
+		annotation SummarizationSetBy = Automatic
+
+	column purchases
+		dataType: double
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111110
+		summarizeBy: sum
+		sourceColumn: purchases
+
+		annotation SummarizationSetBy = Automatic
+
+	column purchase_value
+		dataType: double
+		formatString: R$ #,##0.00
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111111
+		summarizeBy: sum
+		sourceColumn: purchase_value
+
+		annotation SummarizationSetBy = Automatic
+
+	column leads
+		dataType: double
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111112
+		summarizeBy: sum
+		sourceColumn: leads
+
+		annotation SummarizationSetBy = Automatic
+
+	column messaging_conversations
+		dataType: double
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111113
+		summarizeBy: sum
+		sourceColumn: messaging_conversations
+
+		annotation SummarizationSetBy = Automatic
+
+	column complete_registration
+		dataType: double
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111114
+		summarizeBy: sum
+		sourceColumn: complete_registration
+
+		annotation SummarizationSetBy = Automatic
+
+	column add_to_cart
+		dataType: double
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111115
+		summarizeBy: sum
+		sourceColumn: add_to_cart
+
+		annotation SummarizationSetBy = Automatic
+
+	column initiate_checkout
+		dataType: double
+		lineageTag: d4e5f6a7-1111-1111-1111-111111111116
+		summarizeBy: sum
+		sourceColumn: initiate_checkout
+
+		annotation SummarizationSetBy = Automatic
+
+	column conversion_action_types
+		dataType: string
+		lineageTag: 457309be-f61c-40ec-948e-55ef6536f7d4
+		summarizeBy: none
+		sourceColumn: conversion_action_types
+
+		annotation SummarizationSetBy = Automatic
+
+	column conversion_value_action_types
+		dataType: string
+		lineageTag: 9d4f011f-170a-41f9-94cd-fc36d48d2a3a
+		summarizeBy: none
+		sourceColumn: conversion_value_action_types
+
+		annotation SummarizationSetBy = Automatic
+
+	column contacts
+		dataType: double
+		lineageTag: ecf79e3f-3342-475d-a8ab-28a681f08384
+		summarizeBy: sum
+		sourceColumn: contacts
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column conversions_total
+		dataType: double
+		lineageTag: c6121b0f-4655-41f0-9ca9-48388925bcc6
+		summarizeBy: sum
+		sourceColumn: conversions_total
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column meta_revenue
+		dataType: double
+		lineageTag: 6631a99f-79a2-4535-809a-abf835c60107
+		summarizeBy: sum
+		sourceColumn: meta_revenue
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column meta_roas
+		dataType: double
+		lineageTag: 794dcaa9-787c-4a88-bef8-0a492837ca93
+		summarizeBy: sum
+		sourceColumn: meta_roas
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition Meta_Ads_Campanhas = m
+		mode: import
+		source =
+				let
+				    Url = "https://docs.google.com/spreadsheets/d/" & pSpreadsheetId & "/gviz/tq?tqx=out:csv&sheet=Meta_Ads_Campanhas&headers=0&locale=en_US",
+				    Csv = Csv.Document(Web.Contents(Url), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promovido = Table.PromoteHeaders(Csv, [PromoteAllScalars=true]),
+				    Cols = Table.ColumnNames(Promovido),
+				    NovosNomes = {"campaign_id", "campaign_name", "date_start", "date_stop", "impressions", "reach", "clicks", "spend", "ctr", "leads", "messaging_conversations", "contacts", "complete_registration", "add_to_cart", "initiate_checkout", "purchases", "conversions_total", "purchase_value", "meta_revenue", "meta_roas", "conversion_action_types", "conversion_value_action_types"},
+				    Renomeado = Table.RenameColumns(Promovido, List.Zip({List.FirstN(Cols, List.Count(NovosNomes)), NovosNomes})),
+				    Tipado = Table.TransformColumnTypes(Renomeado, {
+				        {"campaign_id",              type text},
+				        {"campaign_name",            type text},
+				        {"date_start",               type date},
+				        {"date_stop",                type date},
+				        {"impressions",              Int64.Type},
+				        {"reach",                    Int64.Type},
+				        {"clicks",                   Int64.Type},
+				        {"spend",                    type number},
+				        {"ctr",                      type number},
+				        {"leads",                    type number},
+				        {"messaging_conversations",  type number},
+				        {"contacts",                 type number},
+				        {"complete_registration",    type number},
+				        {"add_to_cart",              type number},
+				        {"initiate_checkout",        type number},
+				        {"purchases",                type number},
+				        {"conversions_total",        type number},
+				        {"purchase_value",           type number},
+				        {"meta_revenue",             type number},
+				        {"meta_roas",                type number},
+				        {"conversion_action_types",  type text},
+				        {"conversion_value_action_types", type text}
+				    }, "pt-BR")
+				in
+				    Tipado
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navegação
+

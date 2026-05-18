@@ -1,0 +1,67 @@
+/// Posts recentes do Facebook com métricas de engajamento por publicação. Fonte: Meta Graph API.
+table FB_Posts
+	lineageTag: fb500001-aa01-bb01-cc01-dd0100000001
+
+	column id
+		dataType: string
+		isHidden
+		lineageTag: fb500002-aa01-bb01-cc01-dd0100000002
+		sourceColumn: id
+
+	column data
+		dataType: string
+		lineageTag: fb500003-aa01-bb01-cc01-dd0100000003
+		sourceColumn: data
+
+	column message
+		dataType: string
+		lineageTag: fb500004-aa01-bb01-cc01-dd0100000004
+		sourceColumn: message
+
+	column permalink_url
+		dataType: string
+		isHidden
+		lineageTag: fb500005-aa01-bb01-cc01-dd0100000005
+		sourceColumn: permalink_url
+
+	column shares
+		dataType: int64
+		lineageTag: fb500006-aa01-bb01-cc01-dd0100000006
+		sourceColumn: shares
+
+	column comentarios
+		dataType: int64
+		lineageTag: fb500007-aa01-bb01-cc01-dd0100000007
+		sourceColumn: comentarios
+
+	column reacoes
+		dataType: int64
+		lineageTag: fb500008-aa01-bb01-cc01-dd0100000008
+		sourceColumn: reacoes
+
+	column DateKey = DATE(LEFT(FB_Posts[data], 4), MID(FB_Posts[data], 6, 2), MID(FB_Posts[data], 9, 2))
+		dataType: dateTime
+		isHidden
+		lineageTag: fb500009-aa01-bb01-cc01-dd0100000009
+
+	partition FB_Posts = m
+		mode: import
+		source =
+				let
+				    Url = "https://docs.google.com/spreadsheets/d/" & pSpreadsheetId & "/gviz/tq?tqx=out:csv&sheet=FB_Posts&headers=0&locale=en_US",
+				    Csv = Csv.Document(Web.Contents(Url), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promovido = Table.PromoteHeaders(Csv, [PromoteAllScalars=true]),
+				    Cols = Table.ColumnNames(Promovido),
+				    NovosNomes = {"id", "data", "message", "permalink_url", "shares", "comentarios", "reacoes"},
+				    Renomeado = Table.RenameColumns(Promovido, List.Zip({List.FirstN(Cols, List.Count(NovosNomes)), NovosNomes})),
+				    Selecionado = Table.SelectColumns(Renomeado, NovosNomes, MissingField.Ignore),
+				    Tipado = Table.TransformColumnTypes(Selecionado, {{"id", type text}, {"data", type text}, {"message", type text}, {"permalink_url", type text}, {"shares", Int64.Type}, {"comentarios", Int64.Type}, {"reacoes", Int64.Type}}, "pt-BR"),
+				    SemErros = Table.RemoveRowsWithErrors(Tipado, {"id", "data"}),
+				    Filtrado = Table.SelectRows(SemErros, each [id] <> null and [id] <> "")
+				in
+				    Filtrado
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "BASE_TRAGEGO_PAG_&_ORG_PACU_v2"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "64a6142d-6b9d-4454-9d68-f8756252261f"
+  }
+}

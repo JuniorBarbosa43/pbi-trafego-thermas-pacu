@@ -1,0 +1,141 @@
+table Google_Ads_Campanhas
+	lineageTag: e5f6a7b8-c9d0-1234-efab-345678901234
+
+	column campaign_id
+		dataType: string
+		lineageTag: e5f6a7b8-1111-1111-1111-111111111101
+		summarizeBy: none
+		sourceColumn: campaign_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column campaign_name
+		dataType: string
+		lineageTag: e5f6a7b8-1111-1111-1111-111111111102
+		summarizeBy: none
+		sourceColumn: campaign_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: e5f6a7b8-1111-1111-1111-111111111103
+		summarizeBy: none
+		sourceColumn: date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column impressions
+		dataType: int64
+		lineageTag: e5f6a7b8-1111-1111-1111-111111111104
+		summarizeBy: sum
+		sourceColumn: impressions
+
+		annotation SummarizationSetBy = Automatic
+
+	column clicks
+		dataType: int64
+		lineageTag: e5f6a7b8-1111-1111-1111-111111111105
+		summarizeBy: sum
+		sourceColumn: clicks
+
+		annotation SummarizationSetBy = Automatic
+
+	column cost_micros
+		dataType: double
+		lineageTag: e5f6a7b8-1111-1111-1111-111111111106
+		summarizeBy: sum
+		sourceColumn: cost_micros
+
+		annotation SummarizationSetBy = Automatic
+
+	column conversions
+		dataType: double
+		lineageTag: e5f6a7b8-1111-1111-1111-111111111107
+		summarizeBy: sum
+		sourceColumn: conversions
+
+		annotation SummarizationSetBy = Automatic
+
+	column campaign_status
+		dataType: string
+		lineageTag: f6cf0939-60c0-46c7-8a3d-28e912dc8fc5
+		summarizeBy: none
+		sourceColumn: campaign_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column cost_brl
+		dataType: double
+		lineageTag: 0cd1f510-d9ea-4838-9ca9-e780191fedb5
+		summarizeBy: sum
+		sourceColumn: cost_brl
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ctr
+		dataType: double
+		lineageTag: c7b1b0c9-7851-4f70-a3ee-7f63999ba93d
+		summarizeBy: sum
+		sourceColumn: ctr
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column average_cpc
+		dataType: double
+		lineageTag: d6b02fd0-935e-4f51-9748-777fda3631f8
+		summarizeBy: sum
+		sourceColumn: average_cpc
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column conversions_value
+		dataType: double
+		lineageTag: bfaced62-0bd1-4dd6-9d37-c4d0b49adfe2
+		summarizeBy: sum
+		sourceColumn: conversions_value
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition Google_Ads_Campanhas = m
+		mode: import
+		source =
+				let
+				    Url = "https://docs.google.com/spreadsheets/d/" & pSpreadsheetId & "/gviz/tq?tqx=out:csv&sheet=Google_Ads_Campanhas&headers=0&locale=en_US",
+				    Csv = Csv.Document(Web.Contents(Url), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promovido = Table.PromoteHeaders(Csv, [PromoteAllScalars=true]),
+				    Cols = Table.ColumnNames(Promovido),
+				    NovosNomes = {"date", "campaign_id", "campaign_name", "campaign_status", "impressions", "clicks", "cost_micros", "cost_brl", "ctr", "average_cpc", "conversions", "conversions_value"},
+				    Renomeado = Table.RenameColumns(Promovido, List.Zip({List.FirstN(Cols, List.Count(NovosNomes)), NovosNomes})),
+				    Tipado = Table.TransformColumnTypes(Renomeado, {
+				        {"date", type date},
+				        {"campaign_id", type text},
+				        {"campaign_name", type text},
+				        {"campaign_status", type text},
+				        {"impressions", Int64.Type},
+				        {"clicks", Int64.Type},
+				        {"cost_micros", type number},
+				        {"cost_brl", type number},
+				        {"ctr", type number},
+				        {"average_cpc", type number},
+				        {"conversions", type number},
+				        {"conversions_value", type number}
+				    }, "pt-BR")
+				in
+				    Tipado
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

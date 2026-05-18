@@ -1,0 +1,56 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "line_inv",
+  "position": {
+    "x": 9999,
+    "y": 9999,
+    "z": 2000,
+    "height": 1,
+    "width": 1,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "01_Calendário"
+                    }
+                  },
+                  "Property": "AnoMes"
+                }
+              },
+              "queryRef": "01_Calendário.AnoMes",
+              "nativeQueryRef": "AnoMes",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "00_Médidas"
+                    }
+                  },
+                  "Property": "Total Investimento Ads"
+                }
+              },
+              "queryRef": "00_Médidas.Total Investimento Ads",
+              "nativeQueryRef": "Total Investimento Ads"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

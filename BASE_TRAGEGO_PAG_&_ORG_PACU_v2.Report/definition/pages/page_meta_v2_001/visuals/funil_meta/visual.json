@@ -1,0 +1,65 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "funil_meta",
+  "position": {
+    "x": -500,
+    "y": -500,
+    "z": 2000,
+    "height": 10,
+    "width": 10,
+    "tabOrder": 10000
+  },
+  "visual": {
+    "visualType": "multiRowCard",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "00_Médidas"
+                    }
+                  },
+                  "Property": "Meta Add to Cart"
+                }
+              },
+              "queryRef": "00_Médidas.Meta Add to Cart",
+              "nativeQueryRef": "Meta Add to Cart"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "00_Médidas"
+                    }
+                  },
+                  "Property": "Meta Initiate Checkout"
+                }
+              },
+              "queryRef": "00_Médidas.Meta Initiate Checkout",
+              "nativeQueryRef": "Meta Initiate Checkout"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "00_Médidas"
+                    }
+                  },
+                  "Property": "Meta Purchases"
+                }
+              },
+              "queryRef": "00_Médidas.Meta Purchases",
+              "nativeQueryRef": "Meta Purchases"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

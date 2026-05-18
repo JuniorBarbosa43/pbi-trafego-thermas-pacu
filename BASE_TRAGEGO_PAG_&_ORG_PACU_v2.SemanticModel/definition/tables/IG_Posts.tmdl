@@ -1,0 +1,139 @@
+/// Posts recentes do Instagram com métricas de engajamento. Fonte: Meta Graph API.
+table IG_Posts
+	lineageTag: 08dfcd9e-0fac-46cf-9a3a-4e1b5b09db69
+
+	column id
+		dataType: string
+		isHidden
+		lineageTag: fa4869ae-13e2-4301-b861-f0c8d62f1203
+		sourceColumn: id
+
+	column data
+		dataType: string
+		lineageTag: f80b77d1-b878-432c-aadd-21e21f2e29ad
+		sourceColumn: data
+
+	column hora
+		dataType: string
+		isHidden
+		lineageTag: 5a261694-051c-4240-bb9b-279528890515
+		sourceColumn: hora
+
+	column tipo
+		dataType: string
+		lineageTag: 2151c98e-9271-418f-af35-687369cf4f14
+		sourceColumn: tipo
+
+	column likes
+		dataType: int64
+		lineageTag: 0775d516-d1e0-48d3-a18c-b936e950473a
+		sourceColumn: likes
+
+	column comentarios
+		dataType: int64
+		lineageTag: f7ea01e6-7bdb-42c4-93b9-77d7ba157c4c
+		sourceColumn: comentarios
+
+	column engajamento
+		dataType: int64
+		lineageTag: 0984f5b6-2805-4789-8617-26e8b03c0679
+		sourceColumn: engajamento
+
+	column reach
+		dataType: int64
+		lineageTag: db20174e-51c4-453b-baee-779cfc699284
+		sourceColumn: reach
+
+	column impressions
+		dataType: int64
+		lineageTag: a3025264-968b-46e4-b7d9-7224346ffde6
+		sourceColumn: impressions
+
+	column saved
+		dataType: int64
+		lineageTag: 835b3975-85e4-46d8-ac8c-6e7d6e59a49c
+		sourceColumn: saved
+
+	column DateKey = DATE(LEFT(IG_Posts[data], 4), MID(IG_Posts[data], 6, 2), MID(IG_Posts[data], 9, 2))
+		dataType: dateTime
+		isHidden
+		lineageTag: e7f2fae2-9d26-45b5-b6c6-26fbbb0aa658
+
+	column produto
+		dataType: string
+		lineageTag: b34c37a2-b88c-4bff-92ba-5de0e3b78ce7
+		summarizeBy: none
+		sourceColumn: produto
+
+		annotation SummarizationSetBy = Automatic
+
+	column caption
+		dataType: string
+		lineageTag: 6c36e93e-15d5-4239-9343-2072eaec722b
+		summarizeBy: none
+		sourceColumn: caption
+
+		annotation SummarizationSetBy = Automatic
+
+	column permalink
+		dataType: string
+		lineageTag: 362f574e-2cdd-454b-899e-451bd364c46c
+		summarizeBy: none
+		sourceColumn: permalink
+
+		annotation SummarizationSetBy = Automatic
+
+	column media_url
+		dataType: string
+		lineageTag: 1ffd96ba-c296-4e08-a565-7ee96cd0c664
+		summarizeBy: none
+		sourceColumn: media_url
+
+		annotation SummarizationSetBy = Automatic
+
+	column thumbnail_url
+		dataType: string
+		lineageTag: 2591ea7d-41fb-47c1-9784-53b8510b54e5
+		summarizeBy: none
+		sourceColumn: thumbnail_url
+
+		annotation SummarizationSetBy = Automatic
+
+	column views
+		dataType: string
+		lineageTag: bef7793a-7c3a-4c74-9ec3-79756eac3c4b
+		summarizeBy: none
+		sourceColumn: views
+
+		annotation SummarizationSetBy = Automatic
+
+	column shares
+		dataType: string
+		lineageTag: 92bf7ab5-dc19-487f-b3a8-b3c8eca6120b
+		summarizeBy: none
+		sourceColumn: shares
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_interactions
+		dataType: int64
+		lineageTag: 34bab0c5-7b55-456b-ab71-01ac2531d00c
+		sourceColumn: total_interactions
+
+	partition IG_Posts = m
+		mode: import
+		source =
+				let
+				    Url = "https://docs.google.com/spreadsheets/d/" & pSpreadsheetId & "/gviz/tq?tqx=out:csv&sheet=IG_Posts&headers=0&locale=en_US",
+				    Csv = Csv.Document(Web.Contents(Url), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promovido = Table.PromoteHeaders(Csv, [PromoteAllScalars=true]),
+				    Tipado = Table.TransformColumnTypes(Promovido, {{"id", type text}, {"data", type text}, {"tipo", type text}, {"likes", Int64.Type}, {"comentarios", Int64.Type}, {"reach", Int64.Type}, {"impressions", Int64.Type}, {"saved", Int64.Type}, {"total_interactions", Int64.Type}}, "pt-BR"),
+				    ComHora = Table.AddColumn(Tipado, "hora", each null, type text),
+				    ComEngajamento = Table.AddColumn(ComHora, "engajamento", each [likes] + [comentarios], Int64.Type)
+				in
+				    ComEngajamento
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

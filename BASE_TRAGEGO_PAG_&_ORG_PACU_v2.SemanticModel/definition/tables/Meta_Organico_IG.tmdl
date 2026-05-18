@@ -1,0 +1,60 @@
+/// Métricas orgânicas diárias do Instagram Business (@termaspacu). Fonte: Meta Graph API v21.0 via extractor local.
+table Meta_Organico_IG
+	lineageTag: 22b1ece1-267c-4eba-b25f-13d186f22f01
+
+	column data
+		dataType: string
+		lineageTag: ee846bb4-7a61-40e7-9b67-a56ba9ccc459
+		sourceColumn: data
+
+	column metrica
+		dataType: string
+		lineageTag: 42b39966-1ef9-45c7-83b7-72725598d269
+		sourceColumn: metrica
+
+	column valor
+		dataType: double
+		lineageTag: 009e6211-a316-4e58-bbbc-43cc1d9d48d7
+		sourceColumn: valor
+
+	column periodo
+		dataType: string
+		lineageTag: 038f9298-ba94-4ce8-b014-776b1826c556
+		sourceColumn: periodo
+
+	column fonte
+		dataType: string
+		lineageTag: ab6fb70a-95f9-4ddd-9269-f70084ec8cf0
+		sourceColumn: fonte
+
+	column DateKey = DATE(LEFT(Meta_Organico_IG[data], 4), MID(Meta_Organico_IG[data], 6, 2), MID(Meta_Organico_IG[data], 9, 2))
+		dataType: dateTime
+		isHidden
+		lineageTag: 34a64594-293a-4eae-a61c-235cf506576d
+
+	partition Meta_Organico_IG = m
+		mode: import
+		source =
+				let
+				    Url = "https://docs.google.com/spreadsheets/d/" & pSpreadsheetId & "/gviz/tq?tqx=out:csv&sheet=Meta_Organico_IG&headers=0&locale=en_US",
+				    Csv = Csv.Document(Web.Contents(Url), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Promovido = Table.PromoteHeaders(Csv, [PromoteAllScalars=true]),
+				    Cols = Table.ColumnNames(Promovido),
+				    Renomeado = Table.RenameColumns(Promovido, {
+				        {Cols{0}, "data"},
+				        {Cols{1}, "metrica"},
+				        {Cols{2}, "valor"}
+				    }),
+				    Tipado = Table.TransformColumnTypes(Renomeado, {{"data", type text}, {"metrica", type text}, {"valor", type number}}, "pt-BR"),
+				    ComPeriodo = Table.AddColumn(Tipado, "periodo", each "day", type text),
+				    ComFonte = Table.AddColumn(ComPeriodo, "fonte", each "Meta Graph API", type text),
+				    SemErros = Table.RemoveRowsWithErrors(ComFonte, {"valor"}),
+				    TodayStr = Date.ToText(Date.From(DateTime.LocalNow()), "yyyy-MM-dd"),
+				    FilterFuture = Table.SelectRows(SemErros, each [data] <= TodayStr)
+				in
+				    FilterFuture
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

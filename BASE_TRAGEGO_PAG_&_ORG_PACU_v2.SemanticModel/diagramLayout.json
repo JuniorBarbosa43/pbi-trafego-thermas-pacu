@@ -1,0 +1,149 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 1575.8109054267215,
+        "y": 9413.54193073988
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 2506.658001492292,
+            "y": 12589.957938747028
+          },
+          "nodeIndex": "00_Médidas",
+          "nodeLineageTag": "2482a357-fc92-4cb3-b6ed-8b722eff89b1",
+          "size": {
+            "height": 202.5140414861749,
+            "width": 234
+          },
+          "zIndex": 1
+        },
+        {
+          "location": {
+            "x": 2505.7446894300538,
+            "y": 12332.549516137598
+          },
+          "nodeIndex": "01_Calendário",
+          "nodeLineageTag": "91b11b3c-bde4-4030-a3b4-bf56d6e0839d",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 2
+        },
+        {
+          "location": {
+            "x": 4679.0196409076516,
+            "y": 9199.0649993549323
+          },
+          "nodeIndex": "Meta_Ads_Campanhas",
+          "nodeLineageTag": "056bcc13-d4b6-4565-89f9-4a1ad692e1e8",
+          "size": {
+            "height": 272,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 5481.0196409076516,
+            "y": 9145.55182874236
+          },
+          "nodeIndex": "Google_Ads_Campanhas",
+          "nodeLineageTag": "efcd5d9e-cfa9-44a2-8d68-63fe17d104a4",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 5999.0196409076516,
+            "y": 8313.9663608171268
+          },
+          "nodeIndex": "ClimaTempo",
+          "nodeLineageTag": "0a00223e-b669-47c5-a6cb-80ebad563407",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 5046.2749514775978,
+            "y": 6425.6099180903984
+          },
+          "nodeIndex": "IG_Posts",
+          "nodeLineageTag": "08dfcd9e-0fac-46cf-9a3a-4e1b5b09db69",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 5614.2749514775978,
+            "y": 6475.6099180903984
+          },
+          "nodeIndex": "Meta_Organico_FB",
+          "nodeLineageTag": "38366323-81a1-4845-bad3-34590b5f4255",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 5898.2749514775978,
+            "y": 6475.6099180903984
+          },
+          "nodeIndex": "Meta_Organico_IG",
+          "nodeLineageTag": "22b1ece1-267c-4eba-b25f-13d186f22f01",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3777.2749514775978,
+            "y": 5175.3010037682016
+          },
+          "nodeIndex": "Limber_Vendas",
+          "nodeLineageTag": "lb000001-1111-2222-3333-LIMBER000001",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "FB_Posts",
+          "nodeLineageTag": "fb500001-aa01-bb01-cc01-dd0100000001",
+          "size": {
+            "height": 272,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "Todas as tabelas",
+      "zoomValue": 58.078035191614553,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "Todas as tabelas",
+  "defaultDiagram": "Todas as tabelas"
+}

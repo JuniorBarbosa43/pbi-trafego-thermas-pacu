@@ -1,0 +1,58 @@
+expression pMetaToken = "" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=false]
+	lineageTag: 08125c47-2103-4089-9619-6d5f4d3894fe
+
+	annotation PBI_ResultType = Text
+
+	annotation PBI_NavigationStepName = Navegação
+
+expression pMetaAdAccountId = "848291747257410" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=false]
+	lineageTag: 029440f0-1950-48d6-8536-a9bad4d62ac1
+
+	annotation PBI_ResultType = Text
+
+	annotation PBI_NavigationStepName = Navegação
+
+expression pDataPath = "" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=false]
+	lineageTag: e3a1f2b4-c5d6-7890-abcd-ef1234567890
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Text
+
+expression pSpreadsheetId = "1pwbI2DdtlbqvUzCPnLabHO_0or0oBaMqLlo5_Y4wal8" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=false]
+	lineageTag: a1b2c3d4-e5f6-7890-abcd-ef1234567891
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Text
+
+expression 'Erros em Limber_Vendas' =
+		let
+		Fonte = Limber_Vendas,
+		  #"Incompatibilidades de Tipo Detectadas" = let
+		    tableWithOnlyPrimitiveTypes = Table.SelectColumns(Fonte, Table.ColumnsOfType(Fonte, {type nullable number, type nullable text, type nullable logical, type nullable date, type nullable datetime, type nullable datetimezone, type nullable time, type nullable duration})),
+		    recordTypeFields = Type.RecordFields(Type.TableRow(Value.Type(tableWithOnlyPrimitiveTypes))),
+		    fieldNames = Record.FieldNames(recordTypeFields),
+		    fieldTypes = List.Transform(Record.ToList(recordTypeFields), each [Type]),
+		    pairs = List.Transform(List.Positions(fieldNames), (i) => {fieldNames{i}, (v) => if v = null or Value.Is(v, fieldTypes{i}) then v else error [Message = "O tipo do valor não corresponde ao tipo da coluna.", Detail = v], fieldTypes{i}})
+		in
+		    Table.TransformColumns(Fonte, pairs),
+		  #"Índice Adicionado" = Table.AddIndexColumn(#"Incompatibilidades de Tipo Detectadas", "Número da Linha" ,1),
+		  #"Erros Mantidos" = Table.SelectRowsWithErrors(#"Índice Adicionado", {"Localizador", "DataHora", "Status", "TotalLiquido", "Bilhete", "Categoria", "ValorTotal", "ValorUnitario", "UF", "Municipio", "DataVisita", "SequenciaItem", "Pipeline", "StatusOportunidade", "QtdPessoas", "QtdBoia", "QtdArmario", "DateKey"}),
+		  #"Colunas Reordenadas" = Table.ReorderColumns(#"Erros Mantidos", {"Número da Linha", "Localizador", "DataHora", "Status", "TotalLiquido", "Bilhete", "Categoria", "ValorTotal", "ValorUnitario", "UF", "Municipio", "DataVisita", "SequenciaItem", "Pipeline", "StatusOportunidade", "QtdPessoas", "QtdBoia", "QtdArmario", "DateKey"})
+		in
+		  #"Colunas Reordenadas"
+	lineageTag: 9409ccda-a19a-4489-8e18-0c5f74444b06
+	queryGroup: 'Erros na Consulta - 29/04/2026 11:24:29'
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+
+expression pLimberSpreadsheetId = "1YealCM-SGjdboQ4xuhfPdanN-90VXvzt1IUqz22uwbM" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=false]
+	lineageTag: b2c3d4e5-f6a7-8901-bcde-f12345678902
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Text
+

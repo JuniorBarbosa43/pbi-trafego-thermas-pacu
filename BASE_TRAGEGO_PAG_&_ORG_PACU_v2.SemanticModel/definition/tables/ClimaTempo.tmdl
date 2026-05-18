@@ -1,0 +1,235 @@
+/// Dados meteorológicos diários do Thermas Pacu (Santa Cruz do Rio Pardo-SP) via Open-Meteo API.
+/// Gratuita, sem chave de API. Cobre histórico desde 01/01/2023 + previsão 16 dias.
+/// Fonte: open-meteo.com | Lat: -22.9027 | Lon: -49.6373
+/// Atualiza automaticamente a cada Atualizar do modelo.
+table ClimaTempo
+	lineageTag: 0a00223e-b669-47c5-a6cb-80ebad563407
+
+	column TempMax
+		dataType: double
+		lineageTag: 235f4175-ae40-4427-a1bd-2a72e21f056f
+		sourceColumn: TempMax
+
+	column TempMin
+		dataType: double
+		lineageTag: 79cae1b0-94f2-4069-b5aa-2128d6fb1585
+		sourceColumn: TempMin
+
+	column TempMedia
+		dataType: double
+		lineageTag: d4862cdf-4f89-4fe1-966f-9561958bb4cc
+		sourceColumn: TempMedia
+
+	column Precipitacao_mm
+		dataType: double
+		lineageTag: af1e1d60-7396-4138-b534-110c6acd5950
+		sourceColumn: Precipitacao_mm
+
+	column Precipitacao_h
+		dataType: double
+		lineageTag: 582ed494-1c74-42be-90af-7acd46e2e626
+		sourceColumn: Precipitacao_h
+
+	column VelocidadeVento_km
+		dataType: double
+		lineageTag: e2aad920-6b0e-49ad-b461-7e124d5a351b
+		sourceColumn: VelocidadeVento_km
+
+	column RadiacaoSolar_MJ
+		dataType: double
+		lineageTag: 8d681142-8972-4732-9905-e20560dc5f56
+		sourceColumn: RadiacaoSolar_MJ
+
+	column CodigoClima
+		dataType: int64
+		lineageTag: 457748ac-3992-4d14-b269-3323949405f5
+		sourceColumn: CodigoClima
+
+	column Date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: ee0799e7-1fb6-43a8-b4a8-e8241429a8fe
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column DescricaoClima
+		dataType: string
+		lineageTag: 34647c4c-0c82-49a1-b663-db1e63ca7622
+		sourceColumn: DescricaoClima
+
+	column CategoriaClima
+		dataType: string
+		lineageTag: 806c80c0-2b8c-4351-b5e6-a708afa43b97
+		sourceColumn: CategoriaClima
+
+	column BomParaParque
+		dataType: string
+		lineageTag: 826bbaa4-6403-48ef-a631-691f0b2f084a
+		sourceColumn: BomParaParque
+
+	column EhPrevisao
+		dataType: string
+		lineageTag: ff82ee99-4adc-43c7-880b-ad33216add1d
+		sourceColumn: EhPrevisao
+
+	column ProbChuva_pct
+		dataType: double
+		lineageTag: a76f05d1-639b-4166-9b72-607ce487fdbc
+		summarizeBy: sum
+		sourceColumn: ProbChuva_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column NivelRisco
+		dataType: string
+		lineageTag: 5dd4fc67-2e8a-4699-8bed-7e9895c3f737
+		summarizeBy: none
+		sourceColumn: NivelRisco
+
+		annotation SummarizationSetBy = Automatic
+
+	column DataStr
+		dataType: string
+		lineageTag: 6b2970d0-8613-4e29-a482-097046f8b7e5
+		summarizeBy: none
+		sourceColumn: DataStr
+
+		annotation SummarizationSetBy = Automatic
+
+	partition ClimaTempo = m
+		mode: import
+		source =
+				let
+				    Lat = "-22.9027",
+				    Lon = "-49.6373",
+				    Hoje = Date.From(DateTime.LocalNow()),
+				    DataInicioHist = "2023-01-01",
+				    DataFimHist = Date.ToText(Date.AddDays(Hoje, -1), "yyyy-MM-dd"),
+				    DataInicioFore = Date.ToText(Hoje, "yyyy-MM-dd"),
+				    DataFimFore = Date.ToText(Date.AddDays(Hoje, 14), "yyyy-MM-dd"),
+				    Colunas = {"DataStr","TempMax","TempMin","TempMedia","Precipitacao_mm","Precipitacao_h","VelocidadeVento_km","RadiacaoSolar_MJ","CodigoClima","ProbChuva_pct"},
+				    TabelaVazia = Table.FromRows({}, Colunas),
+				    UrlHist = "https://archive-api.open-meteo.com/v1/archive"
+				        & "?latitude=" & Lat
+				        & "&longitude=" & Lon
+				        & "&daily=temperature_2m_max"
+				        & ",temperature_2m_min"
+				        & ",temperature_2m_mean"
+				        & ",precipitation_sum"
+				        & ",precipitation_hours"
+				        & ",wind_speed_10m_max"
+				        & ",shortwave_radiation_sum"
+				        & ",weather_code"
+				        & "&timezone=America%2FSao_Paulo"
+				        & "&start_date=" & DataInicioHist
+				        & "&end_date=" & DataFimHist,
+				    RespHistRaw = try Json.Document(Web.Contents(UrlHist, [Headers=[#"Accept-Encoding"="identity"]])) otherwise null,
+				    TabelaHist = if RespHistRaw = null then TabelaVazia else
+				        let
+				            DH = RespHistRaw[daily],
+				            ZippedHist = List.Zip({
+				                DH[time],
+				                DH[temperature_2m_max],
+				                DH[temperature_2m_min],
+				                DH[temperature_2m_mean],
+				                DH[precipitation_sum],
+				                DH[precipitation_hours],
+				                DH[wind_speed_10m_max],
+				                DH[shortwave_radiation_sum],
+				                DH[weather_code]
+				            })
+				        in
+				            Table.FromRows(
+				                List.Transform(ZippedHist, each _ & {null}),
+				                Colunas
+				            ),
+				    UrlFore = "https://api.open-meteo.com/v1/forecast"
+				        & "?latitude=" & Lat
+				        & "&longitude=" & Lon
+				        & "&daily=temperature_2m_max"
+				        & ",temperature_2m_min"
+				        & ",temperature_2m_mean"
+				        & ",precipitation_sum"
+				        & ",precipitation_hours"
+				        & ",wind_speed_10m_max"
+				        & ",shortwave_radiation_sum"
+				        & ",weather_code"
+				        & ",precipitation_probability_max"
+				        & "&timezone=America%2FSao_Paulo"
+				        & "&start_date=" & DataInicioFore
+				        & "&end_date=" & DataFimFore,
+				    RespForeRaw = try Json.Document(Web.Contents(UrlFore, [Headers=[#"Accept-Encoding"="identity"]])) otherwise null,
+				    TabelaFore = if RespForeRaw = null then TabelaVazia else
+				        let
+				            DF = RespForeRaw[daily],
+				            ZippedFore = List.Zip({
+				                DF[time],
+				                DF[temperature_2m_max],
+				                DF[temperature_2m_min],
+				                DF[temperature_2m_mean],
+				                DF[precipitation_sum],
+				                DF[precipitation_hours],
+				                DF[wind_speed_10m_max],
+				                DF[shortwave_radiation_sum],
+				                DF[weather_code],
+				                DF[precipitation_probability_max]
+				            })
+				        in
+				            Table.FromRows(ZippedFore, Colunas),
+				    Combinado = Table.Combine({TabelaHist, TabelaFore}),
+				    Tipado = Table.TransformColumnTypes(Combinado, {
+				        {"DataStr", type text},
+				        {"TempMax", type number},
+				        {"TempMin", type number},
+				        {"TempMedia", type number},
+				        {"Precipitacao_mm", type number},
+				        {"Precipitacao_h", type number},
+				        {"VelocidadeVento_km", type number},
+				        {"RadiacaoSolar_MJ", type number},
+				        {"CodigoClima", Int64.Type},
+				        {"ProbChuva_pct", type number}
+				    }),
+				    ComData = Table.AddColumn(Tipado, "Date", each Date.FromText([DataStr]), type date),
+				    Dedup = Table.Distinct(ComData, {"DataStr"}),
+				    ComDesc = Table.AddColumn(Dedup, "DescricaoClima", each
+				        if [CodigoClima] = 0 then "Ceu limpo"
+				        else if [CodigoClima] = 1 then "Predominantemente limpo"
+				        else if [CodigoClima] = 2 then "Parcialmente nublado"
+				        else if [CodigoClima] = 3 then "Nublado"
+				        else if [CodigoClima] = 45 or [CodigoClima] = 48 then "Neblina"
+				        else if [CodigoClima] >= 51 and [CodigoClima] <= 55 then "Garoa"
+				        else if [CodigoClima] >= 61 and [CodigoClima] <= 65 then "Chuva fraca a forte"
+				        else if [CodigoClima] >= 80 and [CodigoClima] <= 82 then "Pancadas de chuva"
+				        else if [CodigoClima] = 95 then "Trovoada"
+				        else if [CodigoClima] = 96 or [CodigoClima] = 99 then "Trovoada com granizo"
+				        else "Outro", type text),
+				    ComCateg = Table.AddColumn(ComDesc, "CategoriaClima", each
+				        if [CodigoClima] <= 1 then "Ensolarado"
+				        else if [CodigoClima] <= 3 then "Nublado"
+				        else if [CodigoClima] = 45 or [CodigoClima] = 48 then "Neblina"
+				        else if [CodigoClima] >= 51 and [CodigoClima] <= 82 then "Chuvoso"
+				        else if [CodigoClima] >= 95 then "Tempestade"
+				        else "Outro", type text),
+				    ComBom = Table.AddColumn(ComCateg, "BomParaParque", each
+				        if [TempMax] >= 25 and [Precipitacao_mm] < 2 and [CodigoClima] < 61
+				        then "Sim" else "Nao", type text),
+				    ComRisco = Table.AddColumn(ComBom, "NivelRisco", each
+				        if [CodigoClima] >= 95 then "Alto"
+				        else if [CodigoClima] >= 80 or [Precipitacao_mm] >= 10 then "Medio"
+				        else if [CodigoClima] >= 61 or [Precipitacao_mm] >= 2 then "Baixo"
+				        else "Nenhum", type text),
+				    ComEhPrev = Table.AddColumn(ComRisco, "EhPrevisao", each
+				        if [Date] > Hoje then "Previsao" else "Histórico", type text)
+				in
+				    ComEhPrev
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+
