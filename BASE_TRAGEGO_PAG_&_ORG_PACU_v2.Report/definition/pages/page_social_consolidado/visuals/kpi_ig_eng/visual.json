@@ -1,18 +1,184 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "kpi_ig_eng",
-  "position": { "x": 856, "y": 72, "z": 6400, "height": 74, "width": 198, "tabOrder": 6400 },
+  "position": {
+    "x": 856.49352009412678,
+    "y": 64.1576390303616,
+    "z": 6400,
+    "height": 74,
+    "width": 198,
+    "tabOrder": 6400
+  },
   "visual": {
     "visualType": "card",
-    "query": { "queryState": { "Values": { "projections": [{ "field": { "Measure": { "Expression": { "SourceRef": { "Entity": "00_Médidas" } }, "Property": "IG Contas Engajadas" } }, "queryRef": "00_Médidas.IG Contas Engajadas" }] } } },
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "00_Médidas"
+                    }
+                  },
+                  "Property": "IG Alcance ΔYoY"
+                }
+              },
+              "queryRef": "00_Médidas.IG Alcance ΔYoY"
+            }
+          ]
+        }
+      }
+    },
     "objects": {
-      "labels": [{ "properties": { "color": { "solid": { "color": { "expr": { "Literal": { "Value": "'#F0F6FC'" } } } } }, "fontSize": { "expr": { "Literal": { "Value": "22D" } } }, "bold": { "expr": { "Literal": { "Value": "true" } } } } }],
-      "categoryLabels": [{ "properties": { "color": { "solid": { "color": { "expr": { "Literal": { "Value": "'#E1306C'" } } } } }, "fontSize": { "expr": { "Literal": { "Value": "11D" } } }, "bold": { "expr": { "Literal": { "Value": "true" } } } } }]
+      "labels": [
+        {
+          "properties": {
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#F0F6FC'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "22D"
+                }
+              }
+            },
+            "bold": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "categoryLabels": [
+        {
+          "properties": {
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E1306C'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "11D"
+                }
+              }
+            },
+            "bold": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
     },
     "visualContainerObjects": {
-      "background": [{ "properties": { "show": { "expr": { "Literal": { "Value": "true" } } }, "color": { "solid": { "color": { "expr": { "Literal": { "Value": "'#161B22'" } } } } }, "transparency": { "expr": { "Literal": { "Value": "0D" } } } } }],
-      "border": [{ "properties": { "show": { "expr": { "Literal": { "Value": "true" } } }, "color": { "solid": { "color": { "expr": { "Literal": { "Value": "'#21262D'" } } } } }, "radius": { "expr": { "Literal": { "Value": "6D" } } }, "width": { "expr": { "Literal": { "Value": "1D" } } } } }],
-      "visualHeader": [{ "properties": { "show": { "expr": { "Literal": { "Value": "false" } } } } }]
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#161B22'"
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "border": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#21262D'"
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "6D"
+                }
+              }
+            },
+            "width": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "visualHeader": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }
