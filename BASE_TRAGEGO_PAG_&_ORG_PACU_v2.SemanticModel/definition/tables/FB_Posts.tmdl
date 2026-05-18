@@ -13,6 +13,11 @@ table FB_Posts
 		lineageTag: fb500003-aa01-bb01-cc01-dd0100000003
 		sourceColumn: data
 
+	column tipo
+		dataType: string
+		lineageTag: fb50000a-aa01-bb01-cc01-dd010000000a
+		sourceColumn: tipo
+
 	column message
 		dataType: string
 		lineageTag: fb500004-aa01-bb01-cc01-dd0100000004
@@ -39,6 +44,21 @@ table FB_Posts
 		lineageTag: fb500008-aa01-bb01-cc01-dd0100000008
 		sourceColumn: reacoes
 
+	column impressions
+		dataType: int64
+		lineageTag: fb50000b-aa01-bb01-cc01-dd010000000b
+		sourceColumn: impressions
+
+	column reach
+		dataType: int64
+		lineageTag: fb50000c-aa01-bb01-cc01-dd010000000c
+		sourceColumn: reach
+
+	column clicks
+		dataType: int64
+		lineageTag: fb50000d-aa01-bb01-cc01-dd010000000d
+		sourceColumn: clicks
+
 	column DateKey = DATE(LEFT(FB_Posts[data], 4), MID(FB_Posts[data], 6, 2), MID(FB_Posts[data], 9, 2))
 		dataType: dateTime
 		isHidden
@@ -52,10 +72,10 @@ table FB_Posts
 				    Csv = Csv.Document(Web.Contents(Url), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
 				    Promovido = Table.PromoteHeaders(Csv, [PromoteAllScalars=true]),
 				    Cols = Table.ColumnNames(Promovido),
-				    NovosNomes = {"id", "data", "message", "permalink_url", "shares", "comentarios", "reacoes"},
+				    NovosNomes = {"id", "data", "tipo", "message", "permalink_url", "shares", "comentarios", "reacoes", "impressions", "reach", "clicks"},
 				    Renomeado = Table.RenameColumns(Promovido, List.Zip({List.FirstN(Cols, List.Count(NovosNomes)), NovosNomes})),
 				    Selecionado = Table.SelectColumns(Renomeado, NovosNomes, MissingField.Ignore),
-				    Tipado = Table.TransformColumnTypes(Selecionado, {{"id", type text}, {"data", type text}, {"message", type text}, {"permalink_url", type text}, {"shares", Int64.Type}, {"comentarios", Int64.Type}, {"reacoes", Int64.Type}}, "pt-BR"),
+				    Tipado = Table.TransformColumnTypes(Selecionado, {{"id", type text}, {"data", type text}, {"tipo", type text}, {"message", type text}, {"permalink_url", type text}, {"shares", Int64.Type}, {"comentarios", Int64.Type}, {"reacoes", Int64.Type}, {"impressions", Int64.Type}, {"reach", Int64.Type}, {"clicks", Int64.Type}}, "pt-BR"),
 				    SemErros = Table.RemoveRowsWithErrors(Tipado, {"id", "data"}),
 				    Filtrado = Table.SelectRows(SemErros, each [id] <> null and [id] <> "")
 				in
