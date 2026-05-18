@@ -932,7 +932,7 @@ table 00_Médidas
 			CALCULATE(
 			    SUM(Meta_Organico_FB[valor]),
 			    Meta_Organico_FB[metrica] = "page_impressions_unique",
-			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    REMOVEFILTERS('01_Calendário'),
 			    '01_Calendário'[Ano] = _anoMax - 1
 			)
 		formatString: #,##0
@@ -957,7 +957,7 @@ table 00_Médidas
 			CALCULATE(
 			    SUM(Meta_Organico_IG[valor]),
 			    Meta_Organico_IG[metrica] = "reach",
-			    REMOVEFILTERS('01_Calendário'[Ano]),
+			    REMOVEFILTERS('01_Calendário'),
 			    '01_Calendário'[Ano] = _anoMax - 1
 			)
 		formatString: #,##0
