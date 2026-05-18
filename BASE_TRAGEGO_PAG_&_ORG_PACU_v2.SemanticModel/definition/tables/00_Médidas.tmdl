@@ -2031,8 +2031,8 @@ table 00_Médidas
 	measure 'IG Seguidores ΔYoY' =
 			VAR _anoMax = MAXX(ALLSELECTED('01_Calendário'), '01_Calendário'[Ano])
 			VAR _mesMax = IF(_anoMax = YEAR(TODAY()), MONTH(TODAY()), 12)
-			VAR _cy = CALCULATE(MAX(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax)
-			VAR _ly = CALCULATE(MAX(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'[Ano]), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
+			VAR _cy = CALCULATE(MAX(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax)
+			VAR _ly = CALCULATE(MAX(Meta_Organico_IG[valor]), Meta_Organico_IG[metrica] = "follower_count", REMOVEFILTERS('01_Calendário'), '01_Calendário'[Ano] = _anoMax - 1, '01_Calendário'[MêsNúmero] <= _mesMax)
 			RETURN IF(_ly > 0, DIVIDE(_cy - _ly, _ly), BLANK())
 		formatString: +0.0%;-0.0%;0.0%
 		displayFolder: Orgânico IG
