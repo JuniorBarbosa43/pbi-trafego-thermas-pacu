@@ -33,13 +33,21 @@ API_TIMEOUT = 60
 
 
 def obter_page_token() -> str:
-    url = f"https://graph.facebook.com/v25.0/me/accounts?access_token={META_TOKEN}"
-    with urllib.request.urlopen(url, timeout=API_TIMEOUT) as resp:
-        data = json.loads(resp.read())
-    for page in data.get("data", []):
-        if page.get("id") == META_PAGE_ID:
-            return page["access_token"]
-    raise ValueError(f"Pagina {META_PAGE_ID} nao encontrada")
+    # Fallback para META_TOKEN quando o token nao tem pages_show_list
+    # (token Long-Lived User sem essa permissao retorna me/accounts vazio,
+    # mas insights e posts funcionam normalmente com user token direto)
+    try:
+        url = f"https://graph.facebook.com/v25.0/me/accounts?access_token={META_TOKEN}"
+        with urllib.request.urlopen(url, timeout=API_TIMEOUT) as resp:
+            data = json.loads(resp.read())
+        for page in data.get("data", []):
+            if page.get("id") == META_PAGE_ID:
+                return page["access_token"]
+        n = len(data.get("data", []))
+        print(f"  AVISO: pagina {META_PAGE_ID} nao encontrada em me/accounts ({n} paginas retornadas). Usando META_TOKEN direto.")
+    except Exception as ex:
+        print(f"  AVISO: falha em me/accounts: {ex}. Usando META_TOKEN direto.")
+    return META_TOKEN
 
 
 def graph_get(path: str, params: dict) -> dict:
@@ -370,7 +378,6 @@ def atualizar_posts(token_g, page_token, historico=False, start_date: date = Non
 
 
 def obter_fb_post_insights(post_id: str, page_token: str) -> dict:
-    """Busca métricas de insight por post: alcance, impressões, cliques."""
     metricas = ["post_impressions", "post_impressions_unique", "post_clicks"]
     data = graph_get(f"{post_id}/insights", {
         "metric":       ",".join(metricas),
