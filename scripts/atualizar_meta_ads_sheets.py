@@ -31,8 +31,9 @@ SPREADSHEET_ID = os.environ["SPREADSHEET_ID"]
 # ──────────────────────────────────────────────────────────
 
 SHEET_NAME = "Meta_Ads_Campanhas"
-JANELA_DIAS = 500
-FALLBACK_DIAS = 500
+# 30 dias e suficiente para incremental — historico ja esta na sheet.
+# 500 dias causava 6+ paginas de API por execucao, esgotando o rate limit.
+JANELA_DIAS = 30
 HISTORICO_START_DATE = "2024-12-01"
 RETRYABLE_STATUS = {429, 500, 502, 503, 504}
 # Meta app-level rate limit (code 4) e transitorio — geralmente libera em <20 min
