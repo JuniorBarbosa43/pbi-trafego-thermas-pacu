@@ -31,10 +31,11 @@ SPREADSHEET_ID = os.environ["SPREADSHEET_ID"]
 # ──────────────────────────────────────────────────────────
 
 SHEET_NAME = "Meta_Ads_Campanhas"
-JANELA_DIAS = 500
-FALLBACK_DIAS = 500
+JANELA_DIAS = 30
+FALLBACK_DIAS = 30
 HISTORICO_START_DATE = "2024-12-01"
 RETRYABLE_STATUS = {429, 500, 502, 503, 504}
+RATE_LIMIT_WAIT_S = 300  # 5 min por tentativa quando Meta retorna 403 code 4
 
 # actions e action_values trazem arrays com todos os tipos de conversão.
 # Filtramos somente o tipo "purchase" no parse abaixo.
@@ -145,10 +146,21 @@ def _urlopen_json_with_retry(url: str, label: str, max_attempts: int = 5) -> dic
                 return json.loads(resp.read())
         except urllib.error.HTTPError as err:
             body = err.read().decode("utf-8", errors="replace").strip()
-            retryable = err.code in RETRYABLE_STATUS
+            # HTTP 403 com code=4 é rate limit de aplicação Meta (transitório)
+            is_rate_limit = False
+            if err.code == 403:
+                try:
+                    is_rate_limit = json.loads(body).get("error", {}).get("code") == 4
+                except Exception:
+                    pass
+            retryable = err.code in RETRYABLE_STATUS or is_rate_limit
             if retryable and attempt < max_attempts:
-                wait_s = min(2 ** (attempt - 1), 20)
-                print(f"  AVISO {label}: HTTP {err.code} tentativa {attempt}/{max_attempts}; retry em {wait_s}s")
+                if is_rate_limit:
+                    wait_s = RATE_LIMIT_WAIT_S
+                    print(f"  AVISO {label}: rate limit Meta API (cod 4) tentativa {attempt}/{max_attempts}; aguardando {wait_s}s")
+                else:
+                    wait_s = min(2 ** (attempt - 1), 20)
+                    print(f"  AVISO {label}: HTTP {err.code} tentativa {attempt}/{max_attempts}; retry em {wait_s}s")
                 time.sleep(wait_s)
                 continue
             detail = body[:500] if body else err.reason
