@@ -298,6 +298,27 @@ def upsert_por_data(spreadsheet_id: str, sheet_name: str, headers: list, rows: l
         print(f"  AVISO: coluna chave nao encontrada: {e}. Usando modo APPEND.")
         return append_dados(spreadsheet_id, sheet_name, headers, rows, token)
 
+    # Deduplica os dados novos pela chave antes de comparar com o historico.
+    # Mantem a ultima ocorrencia para casos em que uma fonte envia historico
+    # e previsao com a mesma data no mesmo lote.
+    seen_new_keys = set()
+    deduped_reversed = []
+    duplicate_new_count = 0
+    for row in reversed(rows):
+        try:
+            key_tuple = tuple(row[idx] if idx < len(row) else "" for idx in key_indices_new)
+        except (IndexError, TypeError):
+            deduped_reversed.append(row)
+            continue
+        if key_tuple in seen_new_keys:
+            duplicate_new_count += 1
+            continue
+        seen_new_keys.add(key_tuple)
+        deduped_reversed.append(row)
+    if duplicate_new_count:
+        print(f"  AVISO: {duplicate_new_count} linha(s) nova(s) duplicada(s) removida(s) por chave {key_cols}.")
+    rows = list(reversed(deduped_reversed))
+
     # Extrai tuplas de chaves dos novos dados
     new_keys = set()
     for row in rows:

@@ -134,7 +134,7 @@ def main():
     if args.historico:
         print("Modo HISTORICO: fetchando dados desde 2025-01-01")
         inicio = date(2025, 1, 1)
-        fim = date.today()
+        fim = date.today() - timedelta(days=1)
 
         hist_data = fetch_historico(inicio, fim)
         if hist_data and "daily" in hist_data:
@@ -149,7 +149,7 @@ def main():
         # Modo padrao: ultimos 14 dias
         print("Modo INCREMENTAL: ultimos 14 dias")
         inicio = date.today() - timedelta(days=14)
-        fim = date.today()
+        fim = date.today() - timedelta(days=1)
 
         hist_data = fetch_historico(inicio, fim)
         if hist_data and "daily" in hist_data:
