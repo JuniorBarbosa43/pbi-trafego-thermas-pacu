@@ -15,7 +15,7 @@ from datetime import date, timedelta
 import time
 
 sys.path.insert(0, os.path.dirname(__file__))
-from sheets_helper import limpar_e_gravar, obter_access_token, upsert_por_data, criar_sheet_se_nao_existe
+from sheets_helper import obter_access_token, upsert_por_data, criar_sheet_se_nao_existe
 
 META_TOKEN           = os.environ["META_TOKEN"]
 META_PAGE_ID         = os.environ["META_PAGE_ID"]
@@ -30,6 +30,15 @@ DEFAULT_HISTORICO_START_DATE = "2024-01-01"
 MAX_POST_PAGES = 50
 REQUEST_SLEEP = 0.2
 API_TIMEOUT = 60
+
+
+class GraphApiError(RuntimeError):
+    def __init__(self, path: str, status: int = None, detail: str = ""):
+        self.path = path
+        self.status = status
+        self.detail = detail
+        status_msg = f"HTTP {status}" if status is not None else "erro de rede"
+        super().__init__(f"Graph API ({path}) falhou com {status_msg}: {detail}")
 
 
 def obter_page_token() -> str:
@@ -50,17 +59,21 @@ def obter_page_token() -> str:
     return META_TOKEN
 
 
-def graph_get(path: str, params: dict) -> dict:
+def graph_get(path: str, params: dict, *, required: bool = False) -> dict:
     url = f"https://graph.facebook.com/v25.0/{path}?" + urllib.parse.urlencode(params)
     try:
         with urllib.request.urlopen(url, timeout=API_TIMEOUT) as resp:
             return json.loads(resp.read())
     except urllib.error.HTTPError as e:
-        erro = e.read().decode("utf-8")
+        erro = e.read().decode("utf-8", errors="replace")
         print(f"AVISO Graph API ({path}): HTTP {e.code} - {erro[:300]}")
+        if required:
+            raise GraphApiError(path, e.code, erro[:700]) from e
         return {}
     except Exception as ex:
         print(f"AVISO Graph API ({path}): {ex}")
+        if required:
+            raise GraphApiError(path, detail=str(ex)) from ex
         return {}
 
 
@@ -97,9 +110,12 @@ def extrair_summary_count(obj: dict, key: str) -> int:
 
 
 def gravar_dados(sheet_name: str, headers: list, rows: list, token_g: str, key_cols: list, historico: bool):
-    if historico:
-        limpar_e_gravar(SPREADSHEET_ID, sheet_name, headers, rows, token_g)
-        return
+    if not rows:
+        raise RuntimeError(
+            f"{sheet_name}: nenhuma linha coletada; abortando para nao sobrescrever/preservar aba sem dados."
+        )
+    # Mesmo em historico/backfill, usamos UPSERT para preencher lacunas sem apagar
+    # historico existente caso uma API retorne parcial ou vazia.
     upsert_por_data(SPREADSHEET_ID, sheet_name, headers, rows, token_g, key_cols=key_cols)
 
 
@@ -140,7 +156,7 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False, start_d
                 "since":        since,
                 "until":        until,
                 "access_token": page_token,
-            })
+            }, required=True)
 
             todos_rows.extend(rows_from_insights(data))
 
@@ -157,7 +173,7 @@ def atualizar_fb(token_g: str, page_token: str, historico: bool = False, start_d
             "since":        since,
             "until":        until,
             "access_token": page_token,
-        })
+        }, required=True)
         rows = []
         rows = rows_from_insights(data)
 
@@ -230,7 +246,7 @@ def atualizar_ig(token_g: str, page_token: str, historico: bool = False, start_d
                 "since":        since,
                 "until":        until,
                 "access_token": ig_token,
-            })
+            }, required=True)
             if not data.get("data"):
                 print(f"  AVISO IG insights (day): sem dados para {since}->{until}")
             for item in data.get("data", []):
@@ -317,7 +333,7 @@ def atualizar_posts(token_g, page_token, historico=False, start_date: date = Non
         "fields":       "id,timestamp,caption,permalink,media_url,thumbnail_url,media_type,media_product_type,like_count,comments_count",
         "limit":        "100",
         "access_token": ig_token,
-    })
+    }, required=True)
     for post in data.get("data", []):
         post_date = parse_date(post.get("timestamp", "")[:10]) if post.get("timestamp") else date.today()
         if historico and post_date < start_date:
@@ -413,7 +429,7 @@ def atualizar_fb_posts(token_g, page_token, historico=False, start_date: date = 
         "since":        since,
         "until":        until,
         "access_token": page_token,
-    })
+    }, required=True)
     page_num = 1
     while True:
         for index, post in enumerate(data.get("data", []), start=1):

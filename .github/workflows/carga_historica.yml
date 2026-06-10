@@ -4,16 +4,30 @@ on:
   workflow_dispatch:
     inputs:
       somente:
-        description: 'Modulo a executar (deixe vazio para todos)'
+        description: 'Modulo/fonte a executar'
         required: false
-        default: ''
+        default: 'all'
         type: choice
         options:
-          - ''
+          - all
+          - clima
+          - meta-ads
+          - meta-organico
+          - google-ads
           - fb
           - fb-posts
           - ig
           - ig-posts
+      meta_ads_start_date:
+        description: 'Data inicial Meta Ads (YYYY-MM-DD)'
+        required: false
+        default: '2024-12-01'
+        type: string
+      meta_organico_start_date:
+        description: 'Data inicial Meta Organico/backfill (YYYY-MM-DD)'
+        required: false
+        default: '2024-01-01'
+        type: string
 
 jobs:
 
@@ -21,6 +35,7 @@ jobs:
   clima-historico:
     name: ClimaTempo Historico
     runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.somente == 'all' || github.event.inputs.somente == 'clima' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,6 +57,7 @@ jobs:
   meta-ads-historico:
     name: Meta Ads Historico
     runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.somente == 'all' || github.event.inputs.somente == 'meta-ads' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -59,12 +75,13 @@ jobs:
           GOOGLE_CLIENT_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN:  ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
-        run: python scripts/atualizar_meta_ads_sheets.py --historico --start-date 2024-12-01
+        run: python scripts/atualizar_meta_ads_sheets.py --historico --start-date "${{ github.event.inputs.meta_ads_start_date }}"
 
   # ---------------------------------------------------------
   meta-organico-historico:
     name: Meta Organico Historico
     runs-on: ubuntu-latest
+    if: ${{ contains(fromJSON('["all","meta-organico","fb","fb-posts","ig","ig-posts"]'), github.event.inputs.somente) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -85,16 +102,18 @@ jobs:
           SPREADSHEET_ID:        ${{ secrets.SPREADSHEET_ID }}
         run: |
           SOMENTE="${{ github.event.inputs.somente }}"
-          if [ -n "$SOMENTE" ]; then
-            python scripts/atualizar_meta_organico_sheets.py --historico --somente "$SOMENTE"
+          START_DATE="${{ github.event.inputs.meta_organico_start_date }}"
+          if [ "$SOMENTE" = "fb" ] || [ "$SOMENTE" = "fb-posts" ] || [ "$SOMENTE" = "ig" ] || [ "$SOMENTE" = "ig-posts" ]; then
+            python scripts/atualizar_meta_organico_sheets.py --historico --start-date "$START_DATE" --somente "$SOMENTE"
           else
-            python scripts/atualizar_meta_organico_sheets.py --historico
+            python scripts/atualizar_meta_organico_sheets.py --historico --start-date "$START_DATE"
           fi
 
   # ---------------------------------------------------------
   google-ads-historico:
     name: Google Ads Historico
     runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.somente == 'all' || github.event.inputs.somente == 'google-ads' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
